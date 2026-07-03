@@ -27,3 +27,8 @@ frontend/vite.config.js
 .idea/
 .DS_Store
 Thumbs.db
+
+# Excel 파일은 무시하되, 저장소에 포함된 샘플 양식만 예외로 유지
+*.xlsx
+!samples/alarm_sample.xlsx
+!samples/interlock_sample.xlsx
