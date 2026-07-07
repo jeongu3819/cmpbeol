@@ -4,7 +4,6 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import AddIcon from "@mui/icons-material/Add";
-import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import StepEditorCard from "./StepEditorCard";
 import { emptyStepDraft, newClientId } from "../../types/guide";
 import type { StepDraft } from "../../types/guide";
@@ -80,37 +79,30 @@ export default function StepBuilder({ steps, onChange }: Props) {
         </Button>
       </Stack>
 
+      {/* 가로 스크롤 대신 화면 너비에 맞춰 자동으로 줄바꿈되는 카드 그리드 */}
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "flex-start",
-          gap: 2,
-          overflowX: "auto",
-          pb: 1.5,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))",
+          gap: 3,
+          alignItems: "start",
+          width: "100%",
+          minWidth: 0,
+          overflowX: "hidden",
         }}
       >
         {steps.map((step, index) => (
-          <Box
+          <StepEditorCard
             key={step.clientId}
-            sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}
-          >
-            <StepEditorCard
-              step={step}
-              index={index}
-              total={steps.length}
-              onChange={(patch) => patchStep(index, patch)}
-              onDelete={() => deleteStep(index)}
-              onDuplicate={() => duplicateStep(index)}
-              onMoveLeft={() => move(index, -1)}
-              onMoveRight={() => move(index, 1)}
-            />
-            {index < steps.length - 1 && (
-              <Box sx={{ display: "flex", alignItems: "center", alignSelf: "stretch", flex: "0 0 auto" }}>
-                <KeyboardArrowRightIcon sx={{ color: "text.disabled", fontSize: 32 }} />
-              </Box>
-            )}
-          </Box>
+            step={step}
+            index={index}
+            total={steps.length}
+            onChange={(patch) => patchStep(index, patch)}
+            onDelete={() => deleteStep(index)}
+            onDuplicate={() => duplicateStep(index)}
+            onMoveLeft={() => move(index, -1)}
+            onMoveRight={() => move(index, 1)}
+          />
         ))}
       </Box>
     </Box>
