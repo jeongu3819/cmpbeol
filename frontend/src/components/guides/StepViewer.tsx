@@ -9,9 +9,9 @@ import Divider from "@mui/material/Divider";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ReplayIcon from "@mui/icons-material/Replay";
-import ImageNotSupportedIcon from "@mui/icons-material/ImageNotSupported";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import StepFlowPreview from "./StepFlowPreview";
+import StepImagePreview from "./StepImagePreview";
 import { resolveImageUrl } from "../../api/guideApi";
 import type { Step } from "../../types/guide";
 
@@ -117,43 +117,12 @@ export default function StepViewer({ steps }: Props) {
         <Divider />
 
         <Box sx={{ p: 3 }}>
-          {/* 이미지 영역 (저장된 표시 크기 유지) */}
+          {/* 이미지 영역 (모든 Step 동일한 썸네일 규칙, 클릭 시 확대) */}
           <Box sx={{ mb: 2 }}>
-            {image ? (
-              <Box
-                component="img"
-                src={resolveImageUrl(image.image_url)}
-                alt={image.original_filename ?? "step"}
-                sx={{
-                  display: "block",
-                  width: image.display_width ? image.display_width : "100%",
-                  maxWidth: "100%",
-                  height: "auto",
-                  objectFit: "contain",
-                  borderRadius: 2,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  bgcolor: "#f8fafc",
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  width: "100%",
-                  height: 200,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "text.disabled",
-                  bgcolor: "#f1f5f9",
-                  borderRadius: 2,
-                }}
-              >
-                <ImageNotSupportedIcon sx={{ fontSize: 40, mb: 0.5 }} />
-                <Typography variant="body2">이미지 없음</Typography>
-              </Box>
-            )}
+            <StepImagePreview
+              imageUrl={image ? resolveImageUrl(image.image_url) : null}
+              alt={image?.original_filename ?? `Step ${current.step_order}`}
+            />
           </Box>
 
           {/* 텍스트 설명 */}
