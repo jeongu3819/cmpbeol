@@ -9,16 +9,31 @@ import ImageNotSupportedIcon from "@mui/icons-material/ImageNotSupported";
 interface Props {
   imageUrl?: string | null;
   alt?: string;
+  /** 미리보기 패널 최대 너비 (기본 420px). */
+  maxWidth?: number;
+  /** 미리보기 패널/이미지 최대 높이 (기본 260px). */
+  maxHeight?: number;
+  /** 미리보기 패널 최소 높이 (기본 180px). */
+  minHeight?: number;
+  /** 패널이 상위 컨테이너 높이에 맞춰 늘어나야 하면 true. */
+  stretch?: boolean;
 }
 
 /**
  * 조회 화면 전용 Step 이미지 미리보기.
  * - 편집 화면의 저장된 표시 크기(display_width)를 그대로 쓰지 않고,
- *   모든 Step 을 동일한 썸네일 규칙(max 420x260)으로 normalize 해서 보여준다.
+ *   모든 Step 을 동일한 썸네일 규칙으로 normalize 해서 보여준다.
  * - 이미지를 클릭하면 라이트박스 모달로 크게 볼 수 있다. (X / ESC / 바깥 클릭으로 닫기)
- * - 이미지가 없으면 높이가 크게 튀지 않는 간단한 placeholder 를 표시한다.
+ * - 이미지가 없으면 "등록된 이미지가 없습니다." placeholder 를 표시한다.
  */
-export default function StepImagePreview({ imageUrl, alt = "step" }: Props) {
+export default function StepImagePreview({
+  imageUrl,
+  alt = "step",
+  maxWidth = 420,
+  maxHeight = 260,
+  minHeight = 180,
+  stretch = false,
+}: Props) {
   const [open, setOpen] = useState(false);
 
   if (!imageUrl) {
@@ -26,8 +41,9 @@ export default function StepImagePreview({ imageUrl, alt = "step" }: Props) {
       <Box
         sx={{
           width: "100%",
-          maxWidth: 420,
-          minHeight: 140,
+          maxWidth,
+          minHeight,
+          height: stretch ? "100%" : undefined,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -35,11 +51,11 @@ export default function StepImagePreview({ imageUrl, alt = "step" }: Props) {
           color: "text.disabled",
           bgcolor: "#f1f5f9",
           border: "1px solid #e5e7eb",
-          borderRadius: 4,
+          borderRadius: 5,
         }}
       >
         <ImageNotSupportedIcon sx={{ fontSize: 36, mb: 0.5 }} />
-        <Typography variant="body2">첨부 이미지 없음</Typography>
+        <Typography variant="body2">등록된 이미지가 없습니다.</Typography>
       </Box>
     );
   }
@@ -50,17 +66,19 @@ export default function StepImagePreview({ imageUrl, alt = "step" }: Props) {
         onClick={() => setOpen(true)}
         sx={{
           width: "100%",
-          maxWidth: 420,
-          minHeight: 180,
-          maxHeight: 260,
+          maxWidth,
+          minHeight,
+          maxHeight: stretch ? undefined : maxHeight,
+          height: stretch ? "100%" : undefined,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           bgcolor: "#f8fafc",
           border: "1px solid #e5e7eb",
-          borderRadius: 4,
+          borderRadius: 5,
           overflow: "hidden",
           cursor: "zoom-in",
+          p: 2,
         }}
       >
         <Box
@@ -69,7 +87,7 @@ export default function StepImagePreview({ imageUrl, alt = "step" }: Props) {
           alt={alt}
           sx={{
             maxWidth: "100%",
-            maxHeight: 260,
+            maxHeight,
             width: "auto",
             height: "auto",
             objectFit: "contain",

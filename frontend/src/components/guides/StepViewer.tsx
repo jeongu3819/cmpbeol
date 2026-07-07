@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import Divider from "@mui/material/Divider";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -116,51 +115,92 @@ export default function StepViewer({ steps }: Props) {
         </Box>
         <Divider />
 
-        <Box sx={{ p: 3 }}>
-          {/* 이미지 영역 (모든 Step 동일한 썸네일 규칙, 클릭 시 확대) */}
-          <Box sx={{ mb: 2 }}>
-            <StepImagePreview
-              imageUrl={image ? resolveImageUrl(image.image_url) : null}
-              alt={image?.original_filename ?? `Step ${current.step_order}`}
-            />
-          </Box>
+        <Box
+          sx={{
+            p: 3,
+            // PC: 왼쪽 이미지 / 오른쪽 설명+버튼 2컬럼, 태블릿/모바일: 세로 배치
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "minmax(320px, 42%) 1fr" },
+            gap: { xs: 3, md: 4 },
+            alignItems: "stretch",
+          }}
+        >
+          {/* 왼쪽: 이미지 미리보기 (모든 Step 동일 규칙, 클릭 시 확대) */}
+          <StepImagePreview
+            imageUrl={image ? resolveImageUrl(image.image_url) : null}
+            alt={image?.original_filename ?? `Step ${current.step_order}`}
+            maxWidth={520}
+            maxHeight={320}
+            minHeight={320}
+            stretch
+          />
 
-          {/* 텍스트 설명 */}
-          {current.description && (
-            <Typography sx={{ mb: 2.5, whiteSpace: "pre-wrap", fontSize: 16 }}>
-              {current.description}
-            </Typography>
-          )}
+          {/* 오른쪽: 확인 내용 + 판단 버튼 */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+              minWidth: 0,
+            }}
+          >
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                확인 내용
+              </Typography>
+              <Box
+                sx={{
+                  bgcolor: "#fff",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 4,
+                  p: 2.5,
+                  minHeight: 180,
+                  fontSize: 16,
+                  lineHeight: 1.7,
+                  whiteSpace: "pre-wrap",
+                  color: current.description ? "text.primary" : "text.disabled",
+                }}
+              >
+                {current.description || "등록된 설명이 없습니다."}
+              </Box>
+            </Box>
 
-          {/* 판단 버튼 */}
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-            <Button
-              fullWidth
-              size="large"
-              variant="contained"
-              color="success"
-              startIcon={<CheckCircleIcon />}
-              onClick={handleDone}
-              sx={{ py: 1.5, fontSize: 16 }}
-            >
-              정상 / 조치 완료
-            </Button>
-            <Button
-              fullWidth
-              size="large"
-              variant="contained"
-              endIcon={<ArrowForwardIcon />}
-              onClick={handleNext}
+            {/* 판단 버튼: PC 는 2열, 모바일은 1열 */}
+            <Box
               sx={{
-                py: 1.5,
-                fontSize: 16,
-                bgcolor: "#1e293b",
-                "&:hover": { bgcolor: "#0f172a" },
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                gap: 2,
               }}
             >
-              추가 정보 필요
-            </Button>
-          </Stack>
+              <Button
+                fullWidth
+                size="large"
+                variant="contained"
+                color="success"
+                startIcon={<CheckCircleIcon />}
+                onClick={handleDone}
+                sx={{ py: 1.5, fontSize: 16 }}
+              >
+                정상 / 조치 완료
+              </Button>
+              <Button
+                fullWidth
+                size="large"
+                variant="contained"
+                endIcon={<ArrowForwardIcon />}
+                onClick={handleNext}
+                sx={{
+                  py: 1.5,
+                  fontSize: 16,
+                  bgcolor: "#1e293b",
+                  "&:hover": { bgcolor: "#0f172a" },
+                }}
+              >
+                추가 정보 필요
+              </Button>
+            </Box>
+          </Box>
         </Box>
       </Paper>
     </Box>
