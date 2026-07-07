@@ -3,12 +3,9 @@ import { useNavigate } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
 import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from "@mui/icons-material/Add";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { SIDEBAR_WIDTH } from "./Sidebar";
 
 export default function Topbar() {
@@ -51,20 +48,6 @@ export default function Topbar() {
           />
         </Box>
         <Box sx={{ flexGrow: 1 }} />
-        <Button
-          variant="outlined"
-          startIcon={<UploadFileIcon />}
-          onClick={() => navigate("/import")}
-        >
-          업로드
-        </Button>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate("/guides/new")}
-        >
-          새 가이드
-        </Button>
       </Toolbar>
     </AppBar>
   );
