@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -10,6 +10,8 @@ import { extractErrorMessage } from "../api/client";
 import GuideForm from "../components/guides/GuideForm";
 import LoadingState from "../components/common/LoadingState";
 import type { GuideInput } from "../types/guide";
+import type { GuideType } from "../types/common";
+import { guideTypeLabels } from "../types/common";
 
 export default function GuideFormPage() {
   const { id } = useParams();
@@ -17,6 +19,9 @@ export default function GuideFormPage() {
   const guideId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+
+  const queryType = searchParams.get("type") === "INTERLOCK" ? "INTERLOCK" : "ALARM";
 
   const { data, isLoading } = useQuery({
     queryKey: ["guide", guideId],
@@ -36,6 +41,11 @@ export default function GuideFormPage() {
 
   if (isEdit && isLoading) return <LoadingState />;
 
+  const effectiveType: GuideType = isEdit
+    ? data?.guide_type ?? "ALARM"
+    : queryType;
+  const labels = guideTypeLabels(effectiveType);
+
   return (
     <Box>
       <Button
@@ -46,14 +56,12 @@ export default function GuideFormPage() {
         뒤로
       </Button>
       <Typography variant="h5" gutterBottom>
-        {isEdit ? "트러블슈팅 가이드 수정" : "새 트러블슈팅 가이드 등록"}
+        {isEdit ? labels.editPageTitle : labels.newPageTitle}
       </Typography>
-      {!isEdit && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          기본 정보와 Step을 입력하고 저장하면, 이어서 각 Step에 이미지를 첨부할 수
-          있습니다.
-        </Typography>
-      )}
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        이미지와 설명을 Step 순서대로 추가해 주세요. 조회 화면에서는 정상 여부에
+        따라 다음 Step으로 이동합니다.
+      </Typography>
 
       {mutation.isError && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -62,7 +70,8 @@ export default function GuideFormPage() {
       )}
 
       <GuideForm
-        key={data?.id ?? "new"}
+        key={data?.id ?? `new-${effectiveType}`}
+        guideType={effectiveType}
         initial={data}
         submitting={mutation.isPending}
         onSubmit={(payload) => mutation.mutate(payload)}

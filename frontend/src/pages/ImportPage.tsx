@@ -80,9 +80,9 @@ export default function ImportPage() {
           </Button>
         </Stack>
         <Typography variant="caption" color="text.secondary">
-          필수 컬럼: guide_type, equipment_model, code, title · 선택: process_area,
-          summary, step1~3_title / _description / _question / _normal_result /
-          _caution
+          필수 컬럼: guide_type, equipment_model, code, title, step1_description ·
+          선택: process_area, summary, step2_description ~ step5_description ·
+          이미지는 저장 후 수정 화면에서 Step별로 첨부
         </Typography>
 
         <Divider sx={{ my: 2 }} />

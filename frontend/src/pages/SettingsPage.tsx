@@ -22,7 +22,7 @@ export default function SettingsPage() {
           트러블슈팅 가이드 업로드 양식
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          필수 컬럼: guide_type, equipment_model, code, title
+          필수 컬럼: guide_type, equipment_model, code, title, step1_description
         </Typography>
         <Stack direction="row" spacing={1}>
           <Button
@@ -53,8 +53,11 @@ export default function SettingsPage() {
             <li>지원 형식: .csv, .xlsx</li>
             <li>guide_type 값은 ALARM 또는 INTERLOCK 이어야 합니다.</li>
             <li>
-              선택 컬럼: process_area, summary, step1~3_title / _description /
-              _question / _normal_result / _caution
+              필수 Step: step1_description (Step 1에서 확인할 내용)
+            </li>
+            <li>
+              선택 컬럼: process_area, summary, step2_description ~
+              step5_description
             </li>
             <li>
               같은 (구분 + 설비모델 + 코드) 조합이 이미 있으면 신규 등록 대신

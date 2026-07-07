@@ -19,10 +19,11 @@
 ## 핵심 개념
 
 - **가이드(Guide)**: `guide_type`(ALARM/INTERLOCK) + `equipment_model` + `process_area` + `code` + `title` + `summary` 로 구성된 기본정보. 개별 설비명(KC2 등)은 입력하지 않고 **설비모델**(Mirra, Ebara, LK, LKP …) 단위로 관리합니다.
-- **Step 카드**: 조치방법을 여러 개의 단계로 나눈 카드. 각 Step 은 이미지 · 설명 · **판단 질문**과 두 개의 분기 버튼을 가집니다.
-  - **정상 / 조치 완료** → 종료 메시지 표시 후 가이드 종료
-  - **추가 판단 필요** → `next_step_order` 로 지정된 다음 Step 으로 이동
-  - 마지막 Step 은 `next_step_order` 없이 "조치 완료 / 상위 담당자 문의" 안내로 종료
+- **Step 카드**: 조치방법을 여러 개의 단계로 나눈 카드. 각 Step 은 **이미지 + 텍스트 설명**만 가집니다. Step 사이에는 화살표로 흐름을 표시합니다.
+  - 조회 화면에서 각 Step 은 두 개의 버튼만 제공합니다.
+  - **정상 / 조치 완료** → "조치가 완료되었습니다." 안내 후 처음으로 돌아가기
+  - **추가 정보 필요** → 자동으로 다음 순서(step_order + 1)의 Step 으로 이동
+  - 마지막 Step 에서 "추가 정보 필요" 선택 시 "추가 확인이 필요합니다. 담당자 또는 상위 엔지니어에게 문의하세요." 안내
 
 ## 주요 기능 / 화면
 
@@ -66,16 +67,15 @@ cmpbeol/
 
 ## 실행 방법
 
-### 1. MySQL DB 생성 + 스키마 + 시드
+### 1. 기존 cmpbeol DB 사용
 
-MySQL 8.0 이상이 설치되어 있어야 합니다. (schema.sql 안에서 `cmp_guide` DB를 생성합니다.)
+이미 HeidiSQL 등에 만들어 둔 `cmpbeol` DB 를 그대로 사용합니다.
+앱은 DB/테이블을 자동으로 생성하거나 초기화하지 않습니다.
 
-```bash
-mysql -u root -p < db/schema.sql
-mysql -u root -p < db/seed.sql
-```
+- 필요한 테이블이 아직 없다면 `db/schema.sql` 을 **수동으로** 실행하세요. (참고용 스크립트)
+- 샘플 데이터가 필요하면 `db/seed.sql` 을 수동 실행하세요. (선택)
 
-> Windows에서 `mysql` CLI 경로가 없다면 MySQL Workbench에서 `db/schema.sql` → `db/seed.sql` 순서로 실행해도 됩니다.
+> `db/schema.sql`, `db/seed.sql` 은 참고용이며 앱 실행 시 자동 실행되지 않습니다.
 
 ### 2. Backend 실행 (FastAPI)
 
@@ -86,6 +86,7 @@ python -m venv .venv
 # source .venv/bin/activate       # macOS/Linux
 pip install -r requirements.txt
 copy .env.example .env            # Windows (cp .env.example .env)
+# backend/.env 를 열어 DATABASE_URL 의 비밀번호를 실제 값으로 수정
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -93,17 +94,17 @@ uvicorn app.main:app --reload --port 8000
 - 헬스체크: http://localhost:8000/api/health
 - Step 이미지는 `backend/uploads/steps/` 에 저장되고 `/uploads/...` 로 서빙됩니다.
 
-`.env` 주요 항목:
+`backend/.env` 주요 항목:
 
 ```
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=cmp_guide
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+DATABASE_URL=mysql+pymysql://root:your_password@127.0.0.1:3306/cmpbeol
+AUTO_CREATE_TABLES=false
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 UPLOAD_DIR=uploads
 ```
+
+- `DATABASE_URL` 은 코드에 하드코딩하지 않고 `.env` 에서만 읽습니다. 값이 없으면 앱이 시작되지 않습니다.
+- `AUTO_CREATE_TABLES=true` 로 두면 **없는 테이블만** `create_all` 로 생성합니다(기존 테이블/데이터는 유지). 이미 테이블을 만들어 두었다면 `false` 권장.
 
 ### 3. Frontend 실행 (React + Vite)
 
@@ -131,14 +132,14 @@ npm run dev
 
 ### 업로드 양식 컬럼
 
-**필수**: `guide_type`(ALARM/INTERLOCK), `equipment_model`, `code`, `title`
+**필수**: `guide_type`(ALARM/INTERLOCK), `equipment_model`, `code`, `title`, `step1_description`
 
 **선택(기본)**: `process_area`, `summary`
 
-**선택(Step, 1~3)**: `stepN_title`, `stepN_description`, `stepN_question`, `stepN_normal_result`, `stepN_caution`
-(향후 확장용 `stepN_image_url` 도 선택적으로 인식)
+**선택(Step, 2~5)**: `step2_description` ~ `step5_description`
 
-- 내용이 있는 Step 만 생성되며, `next_step_order` 는 다음 Step 으로 자동 연결(마지막은 종료)됩니다.
+- 각 Step 은 텍스트 설명만 받습니다. 설명이 있는 Step 만 순서대로 생성됩니다.
+- 이미지는 CSV/XLSX 로 처리하지 않고, 저장 후 각 Step 수정 화면에서 첨부합니다.
 
 ---
 
