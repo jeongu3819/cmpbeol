@@ -101,7 +101,7 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=cmp_guide
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 UPLOAD_DIR=uploads
 ```
 
@@ -113,7 +113,7 @@ npm install
 npm run dev
 ```
 
-- 화면: http://localhost:5173
+- 화면: http://localhost:3000
 - 개발 서버는 `/api` 및 `/uploads` 요청을 `http://localhost:8000` 으로 프록시합니다. (`vite.config.ts`)
 - 백엔드가 다른 주소에 있으면 `frontend/.env` 에 `VITE_API_BASE_URL=http://your-host:8000` 을 설정하세요.
 

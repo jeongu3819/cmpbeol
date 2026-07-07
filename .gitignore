@@ -35,3 +35,100 @@ Thumbs.db
 *.xlsx
 !samples/alarm_sample.xlsx
 !samples/interlock_sample.xlsx
+
+# ─── Node / Frontend ───
+node_modules/
+dist/
+build/
+*.local
+.vite/
+
+# ─── Python / Backend ───
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# ─── Data ───
+backend/data.json
+
+# ─── IDE ───
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs ───
+*.log
+npm-debug.log*
+
+# ─── Env ───
+.env
+.env.local
+.env.*.local
+
+# ─── Database ───
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Prisma ───
+backend/prisma/migrations/
+
+# ─── Docker ───
+docker-compose.override.yml
+
+frontend/.env
+frontend/.env.*
+backend/.env
+
+lib/
+Lib/
+site/
+Lib/site-packages/
+lib/site-packages/
+Scripts/
+Include/
+pyvenv.cfg
+
+# Env
+.env
+.env.*
+**/.env
+**/.env.*
+backend/app/.env*
+frontend/src/.env*
+
+# Python virtual environment
+backend/plan/
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment files
+.env
+.env.local
+app/.env.local
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Uploaded files
+backend/uploads/
