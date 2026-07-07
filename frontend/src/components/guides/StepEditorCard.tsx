@@ -38,11 +38,12 @@ export default function StepEditorCard({
       sx={{
         p: 2,
         borderRadius: 2,
-        flex: "0 0 380px",
-        minWidth: 360,
-        maxWidth: 420,
+        // 폭은 이미지 크기에 따라 자연스럽게 커지고, 높이는 내용에 맞춰 확장된다.
+        flex: "0 0 auto",
+        minWidth: 320,
         display: "flex",
         flexDirection: "column",
+        alignSelf: "flex-start",
       }}
     >
       <Stack
@@ -78,10 +79,17 @@ export default function StepEditorCard({
               <ContentCopyIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="삭제">
-            <IconButton size="small" color="error" onClick={onDelete}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
+          <Tooltip title={total <= 1 ? "최소 1개의 Step은 필요합니다" : "삭제"}>
+            <span>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={onDelete}
+                disabled={total <= 1}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
         </Stack>
       </Stack>

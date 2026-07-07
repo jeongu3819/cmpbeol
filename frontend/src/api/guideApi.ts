@@ -43,8 +43,14 @@ export async function updateGuide(
   return data;
 }
 
-export async function deleteGuide(id: number, hard = false): Promise<void> {
-  await apiClient.delete(`${BASE}/${id}`, { params: { hard } });
+/** Soft delete (비활성화) — 목록에서 숨긴다. */
+export async function deleteGuide(id: number): Promise<void> {
+  await apiClient.delete(`${BASE}/${id}`);
+}
+
+/** Hard delete — Step / 이미지까지 실제로 삭제한다. */
+export async function hardDeleteGuide(id: number): Promise<void> {
+  await apiClient.delete(`${BASE}/${id}/hard`);
 }
 
 // --- Guide + Step + 이미지를 한 번에 저장 (multipart) ---

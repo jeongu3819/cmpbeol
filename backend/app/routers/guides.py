@@ -187,7 +187,10 @@ def list_guides(
         query = query.filter(G.equipment_model.like(f"%{equipment_model}%"))
     if process_area:
         query = query.filter(G.process_area.like(f"%{process_area}%"))
-    if is_active is not None:
+    # 기본값: 활성 가이드만 조회한다. (비활성/삭제한 가이드는 목록에서 숨긴다)
+    if is_active is None:
+        query = query.filter(G.is_active.is_(True))
+    else:
         query = query.filter(G.is_active == is_active)
     if q:
         like = f"%{q}%"
@@ -364,14 +367,26 @@ async def update_guide_with_steps(
 
 
 @router.delete("/guides/{guide_id}", status_code=204)
-def delete_guide(guide_id: int, hard: bool = False, db: Session = Depends(get_db)):
+def delete_guide(guide_id: int, db: Session = Depends(get_db)):
+    """Soft delete — 비활성화한다. 기본 목록에서 숨겨진다."""
     guide = db.query(models.TroubleshootingGuide).get(guide_id)
     if not guide:
         raise HTTPException(status_code=404, detail="가이드를 찾을 수 없습니다.")
-    if hard:
-        db.delete(guide)
-    else:
-        guide.is_active = False
+    guide.is_active = False
+    db.commit()
+    return None
+
+
+@router.delete("/guides/{guide_id}/hard", status_code=204)
+def hard_delete_guide(guide_id: int, db: Session = Depends(get_db)):
+    """Hard delete — Step / 이미지 row(FK CASCADE)와 물리 이미지 파일까지 삭제한다."""
+    guide = _load_guide(db, guide_id)
+    # DB row 는 FK ON DELETE CASCADE 로 함께 지워지지만, 업로드된 이미지 파일은
+    # 직접 지워야 하므로 먼저 물리 파일을 삭제한다.
+    for step in guide.steps:
+        for image in step.images:
+            _delete_image_file(image)
+    db.delete(guide)
     db.commit()
     return None
 

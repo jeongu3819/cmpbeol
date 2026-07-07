@@ -8,12 +8,16 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import EmptyState from "../common/EmptyState";
 import GuideTypeBadge from "./GuideTypeBadge";
 import type { GuideListItem } from "../../types/guide";
 
 interface Props {
   rows: GuideListItem[];
+  onDelete?: (row: GuideListItem) => void;
 }
 
 function formatDate(dt?: string | null): string {
@@ -21,7 +25,7 @@ function formatDate(dt?: string | null): string {
   return dt.slice(0, 10);
 }
 
-export default function GuideTable({ rows }: Props) {
+export default function GuideTable({ rows, onDelete }: Props) {
   const navigate = useNavigate();
 
   if (rows.length === 0) {
@@ -44,6 +48,7 @@ export default function GuideTable({ rows }: Props) {
             <TableCell>제목</TableCell>
             <TableCell align="center">Step 수</TableCell>
             <TableCell>수정일</TableCell>
+            {onDelete && <TableCell align="center" padding="checkbox" />}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -71,6 +76,22 @@ export default function GuideTable({ rows }: Props) {
               <TableCell sx={{ whiteSpace: "nowrap" }}>
                 {formatDate(row.updated_at)}
               </TableCell>
+              {onDelete && (
+                <TableCell align="center" padding="checkbox">
+                  <Tooltip title="삭제">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(row);
+                      }}
+                    >
+                      <DeleteForeverIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

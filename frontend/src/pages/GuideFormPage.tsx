@@ -13,6 +13,7 @@ import {
 import { extractErrorMessage } from "../api/client";
 import GuideForm from "../components/guides/GuideForm";
 import LoadingState from "../components/common/LoadingState";
+import { useToast } from "../components/common/ToastProvider";
 import type { GuideMeta, StepDraft } from "../types/guide";
 import type { GuideType } from "../types/common";
 import { guideTypeLabels } from "../types/common";
@@ -23,6 +24,7 @@ export default function GuideFormPage() {
   const guideId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
 
   const queryType = searchParams.get("type") === "INTERLOCK" ? "INTERLOCK" : "ALARM";
@@ -41,7 +43,13 @@ export default function GuideFormPage() {
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ["guides"] });
       queryClient.invalidateQueries({ queryKey: ["guide", saved.id] });
-      navigate(`/guides/${saved.id}/edit`);
+      if (isEdit) {
+        toast("수정되었습니다.");
+        navigate(`/guides/${saved.id}`);
+      } else {
+        toast("저장되었습니다.");
+        navigate("/guides");
+      }
     },
   });
 

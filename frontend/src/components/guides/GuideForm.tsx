@@ -6,9 +6,11 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
+import Alert from "@mui/material/Alert";
 import StepBuilder from "./StepBuilder";
 import GuideTypeBadge from "./GuideTypeBadge";
 import { guideToStepDrafts } from "../../api/guideApi";
+import { emptyStepDraft } from "../../types/guide";
 import type { Guide, GuideMeta, StepDraft } from "../../types/guide";
 import type { GuideType } from "../../types/common";
 import { guideTypeLabels } from "../../types/common";
@@ -42,10 +44,13 @@ export default function GuideForm({
   onCancel,
 }: Props) {
   const [form, setForm] = useState<GuideMeta>(toMeta(guideType, initial));
-  const [steps, setSteps] = useState<StepDraft[]>(() =>
-    guideToStepDrafts(initial)
-  );
+  const [steps, setSteps] = useState<StepDraft[]>(() => {
+    // 수정 시 기존 step 을 사용하고, 없으면(신규 등록 포함) 기본 Step 1 을 보여준다.
+    const drafts = guideToStepDrafts(initial);
+    return drafts.length > 0 ? drafts : [emptyStepDraft(1)];
+  });
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [stepError, setStepError] = useState<string | null>(null);
 
   const labels = guideTypeLabels(form.guide_type);
 
@@ -63,6 +68,19 @@ export default function GuideForm({
     });
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
+
+    // Step 1 에는 이미지 또는 설명 중 하나는 입력하도록 안내한다.
+    const first = steps[0];
+    const firstEmpty =
+      !first ||
+      (!first.imageFile &&
+        !first.imagePreviewUrl &&
+        !String(first.description ?? "").trim());
+    if (firstEmpty) {
+      setStepError("Step 1에 이미지 또는 설명을 입력해 주세요.");
+      return;
+    }
+    setStepError(null);
     onSubmit(form, steps);
   };
 
@@ -138,6 +156,11 @@ export default function GuideForm({
 
       <Paper variant="outlined" sx={{ p: 3, mb: 2 }}>
         <StepBuilder steps={steps} onChange={setSteps} />
+        {stepError && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            {stepError}
+          </Alert>
+        )}
       </Paper>
 
       <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>

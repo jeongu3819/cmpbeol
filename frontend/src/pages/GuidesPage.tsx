@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid2";
 import Paper from "@mui/material/Paper";
@@ -12,21 +12,26 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import AddIcon from "@mui/icons-material/Add";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { fetchGuides } from "../api/guideApi";
-import type { GuideFilters } from "../types/guide";
+import { fetchGuides, hardDeleteGuide } from "../api/guideApi";
+import type { GuideFilters, GuideListItem } from "../types/guide";
 import type { GuideType } from "../types/common";
 import GuideTable from "../components/guides/GuideTable";
 import NewGuideTypeDialog from "../components/guides/NewGuideTypeDialog";
 import SearchInput from "../components/common/SearchInput";
 import LoadingState from "../components/common/LoadingState";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import { useToast } from "../components/common/ToastProvider";
 
 type TabValue = "ALL" | GuideType;
 
 export default function GuidesPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<TabValue>("ALL");
   const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<GuideListItem | null>(null);
   const [filters, setFilters] = useState<GuideFilters>({
     q: searchParams.get("q") ?? "",
     equipment_model: "",
@@ -44,6 +49,15 @@ export default function GuidesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["guides", queryFilters],
     queryFn: () => fetchGuides(queryFilters),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => hardDeleteGuide(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guides"] });
+      toast("삭제되었습니다.");
+    },
+    onSettled: () => setDeleteTarget(null),
   });
 
   const setField = (key: keyof GuideFilters, value: string) =>
@@ -136,8 +150,20 @@ export default function GuidesPage() {
       {isLoading ? (
         <LoadingState />
       ) : (
-        <GuideTable rows={data?.items ?? []} />
+        <GuideTable rows={data?.items ?? []} onDelete={setDeleteTarget} />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="이 가이드를 삭제할까요?"
+        message="삭제하면 Step과 이미지도 함께 삭제됩니다."
+        confirmText="삭제"
+        confirmColor="error"
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </Box>
   );
 }

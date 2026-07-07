@@ -10,20 +10,24 @@ import Alert from "@mui/material/Alert";
 import Chip from "@mui/material/Chip";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { deleteGuide, fetchGuide } from "../api/guideApi";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { deleteGuide, hardDeleteGuide, fetchGuide } from "../api/guideApi";
 import { extractErrorMessage } from "../api/client";
 import GuideTypeBadge from "../components/guides/GuideTypeBadge";
 import StepViewer from "../components/guides/StepViewer";
 import LoadingState from "../components/common/LoadingState";
 import ConfirmDialog from "../components/common/ConfirmDialog";
+import { useToast } from "../components/common/ToastProvider";
 
 export default function GuideDetailPage() {
   const { id } = useParams();
   const guideId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const toast = useToast();
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["guide", guideId],
@@ -31,10 +35,20 @@ export default function GuideDetailPage() {
     enabled: !Number.isNaN(guideId),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: () => deleteGuide(guideId, false),
+  const deactivateMutation = useMutation({
+    mutationFn: () => deleteGuide(guideId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["guides"] });
+      toast("비활성화되었습니다.");
+      navigate("/guides");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => hardDeleteGuide(guideId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guides"] });
+      toast("삭제되었습니다.");
       navigate("/guides");
     },
   });
@@ -64,11 +78,19 @@ export default function GuideDetailPage() {
           </Button>
           <Button
             variant="outlined"
-            color="error"
-            startIcon={<DeleteIcon />}
-            onClick={() => setConfirmOpen(true)}
+            color="warning"
+            startIcon={<VisibilityOffIcon />}
+            onClick={() => setDeactivateOpen(true)}
           >
             비활성화
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteForeverIcon />}
+            onClick={() => setDeleteOpen(true)}
+          >
+            삭제
           </Button>
         </Stack>
       </Stack>
@@ -112,16 +134,29 @@ export default function GuideDetailPage() {
       <StepViewer steps={data.steps} />
 
       <ConfirmDialog
-        open={confirmOpen}
-        title="가이드 비활성화"
-        message="이 트러블슈팅 가이드를 비활성화하시겠습니까? (목록에서 숨겨집니다)"
+        open={deactivateOpen}
+        title="이 가이드를 비활성화할까요?"
+        message="비활성화하면 기본 목록에서 보이지 않습니다."
         confirmText="비활성화"
         confirmColor="error"
         onConfirm={() => {
-          setConfirmOpen(false);
+          setDeactivateOpen(false);
+          deactivateMutation.mutate();
+        }}
+        onCancel={() => setDeactivateOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="이 가이드를 삭제할까요?"
+        message="삭제하면 Step과 이미지도 함께 삭제됩니다."
+        confirmText="삭제"
+        confirmColor="error"
+        onConfirm={() => {
+          setDeleteOpen(false);
           deleteMutation.mutate();
         }}
-        onCancel={() => setConfirmOpen(false)}
+        onCancel={() => setDeleteOpen(false)}
       />
     </Box>
   );
