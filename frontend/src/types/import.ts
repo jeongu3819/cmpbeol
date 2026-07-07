@@ -1,32 +1,30 @@
-import type { ImportType } from "./common";
-
 export interface ImportPreviewRow {
   row_index: number;
   valid: boolean;
+  action: "create" | "update" | "skip";
   errors: string[];
   data: Record<string, string>;
 }
 
 export interface ImportPreview {
-  import_type: ImportType;
   filename: string;
   columns: string[];
   required_columns: string[];
   total_rows: number;
   valid_rows: number;
   invalid_rows: number;
+  create_rows: number;
+  update_rows: number;
   rows: ImportPreviewRow[];
 }
 
 export interface ImportConfirmPayload {
-  import_type: ImportType;
   filename: string;
   rows: Record<string, string>[];
 }
 
 export interface ImportResult {
   job_id: number;
-  import_type: ImportType;
   filename: string;
   total_rows: number;
   success_rows: number;

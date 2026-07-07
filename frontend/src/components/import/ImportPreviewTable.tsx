@@ -28,6 +28,7 @@ export default function ImportPreviewTable({ preview }: Props) {
         <TableHead>
           <TableRow>
             <TableCell sx={{ minWidth: 70 }}>상태</TableCell>
+            <TableCell sx={{ minWidth: 80 }}>처리</TableCell>
             <TableCell sx={{ minWidth: 40 }}>#</TableCell>
             {displayCols.map((c) => (
               <TableCell key={c} sx={{ whiteSpace: "nowrap" }}>
@@ -65,6 +66,18 @@ export default function ImportPreviewTable({ preview }: Props) {
                       color="error"
                     />
                   </Tooltip>
+                )}
+              </TableCell>
+              <TableCell>
+                {row.valid ? (
+                  <Chip
+                    label={row.action === "update" ? "업데이트" : "신규"}
+                    size="small"
+                    color={row.action === "update" ? "secondary" : "primary"}
+                    variant="outlined"
+                  />
+                ) : (
+                  <Chip label="제외" size="small" variant="outlined" />
                 )}
               </TableCell>
               <TableCell>{row.row_index + 1}</TableCell>

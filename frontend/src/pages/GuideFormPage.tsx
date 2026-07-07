@@ -1,22 +1,17 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import {
-  createAlarmGuide,
-  fetchAlarmGuide,
-  updateAlarmGuide,
-} from "../api/alarmGuideApi";
+import { createGuide, fetchGuide, updateGuide } from "../api/guideApi";
 import { extractErrorMessage } from "../api/client";
-import AlarmGuideForm from "../components/guides/AlarmGuideForm";
+import GuideForm from "../components/guides/GuideForm";
 import LoadingState from "../components/common/LoadingState";
-import type { AlarmGuideInput } from "../types/alarmGuide";
+import type { GuideInput } from "../types/guide";
 
-export default function AlarmGuideFormPage() {
+export default function GuideFormPage() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const guideId = Number(id);
@@ -24,18 +19,18 @@ export default function AlarmGuideFormPage() {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["alarm-guide", guideId],
-    queryFn: () => fetchAlarmGuide(guideId),
+    queryKey: ["guide", guideId],
+    queryFn: () => fetchGuide(guideId),
     enabled: isEdit && !Number.isNaN(guideId),
   });
 
   const mutation = useMutation({
-    mutationFn: (payload: AlarmGuideInput) =>
-      isEdit ? updateAlarmGuide(guideId, payload) : createAlarmGuide(payload),
+    mutationFn: (payload: GuideInput) =>
+      isEdit ? updateGuide(guideId, payload) : createGuide(payload),
     onSuccess: (saved) => {
-      queryClient.invalidateQueries({ queryKey: ["alarm-guides"] });
-      queryClient.invalidateQueries({ queryKey: ["alarm-guide", saved.id] });
-      navigate(`/alarms/${saved.id}`);
+      queryClient.invalidateQueries({ queryKey: ["guides"] });
+      queryClient.invalidateQueries({ queryKey: ["guide", saved.id] });
+      navigate(`/guides/${saved.id}/edit`);
     },
   });
 
@@ -51,8 +46,14 @@ export default function AlarmGuideFormPage() {
         뒤로
       </Button>
       <Typography variant="h5" gutterBottom>
-        {isEdit ? "알람 조치 가이드 수정" : "알람 조치 가이드 등록"}
+        {isEdit ? "트러블슈팅 가이드 수정" : "새 트러블슈팅 가이드 등록"}
       </Typography>
+      {!isEdit && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          기본 정보와 Step을 입력하고 저장하면, 이어서 각 Step에 이미지를 첨부할 수
+          있습니다.
+        </Typography>
+      )}
 
       {mutation.isError && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -60,14 +61,13 @@ export default function AlarmGuideFormPage() {
         </Alert>
       )}
 
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <AlarmGuideForm
-          initial={data}
-          submitting={mutation.isPending}
-          onSubmit={(payload) => mutation.mutate(payload)}
-          onCancel={() => navigate(-1)}
-        />
-      </Paper>
+      <GuideForm
+        key={data?.id ?? "new"}
+        initial={data}
+        submitting={mutation.isPending}
+        onSubmit={(payload) => mutation.mutate(payload)}
+        onCancel={() => navigate(-1)}
+      />
     </Box>
   );
 }

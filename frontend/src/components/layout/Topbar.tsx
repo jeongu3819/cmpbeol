@@ -17,7 +17,7 @@ export default function Topbar() {
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(`/alarms?search=${encodeURIComponent(q)}`);
+    navigate(`/guides?q=${encodeURIComponent(q)}`);
   };
 
   return (
@@ -38,7 +38,7 @@ export default function Topbar() {
           <TextField
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="알람명 / 인터락명 / 코드 전체 검색"
+            placeholder="코드 / 제목 / 설비모델 전체 검색"
             size="small"
             fullWidth
             InputProps={{
@@ -53,24 +53,17 @@ export default function Topbar() {
         <Box sx={{ flexGrow: 1 }} />
         <Button
           variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => navigate("/alarms/new")}
-        >
-          알람 등록
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={() => navigate("/interlocks/new")}
-        >
-          인터락 등록
-        </Button>
-        <Button
-          variant="contained"
           startIcon={<UploadFileIcon />}
           onClick={() => navigate("/import")}
         >
-          파일 업로드
+          업로드
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate("/guides/new")}
+        >
+          새 가이드
         </Button>
       </Toolbar>
     </AppBar>

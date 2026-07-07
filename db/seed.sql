@@ -1,142 +1,78 @@
 -- ============================================================
--- 설비 알람/인터락 조치 가이드 관리 - Seed Data (CMP 설비 기준)
+-- 트러블슈팅 가이드 - Seed Data (CMP 설비 기준)
 -- schema.sql 실행 후에 실행하세요.
 -- ============================================================
 
 USE cmp_guide;
 
 -- ------------------------------------------------------------
--- 알람 조치 가이드 (5건)
+-- 가이드 (알람 3건 + 인터락 2건)
 -- ------------------------------------------------------------
-INSERT INTO alarm_guides
-  (equipment_name, equipment_model, process, area, alarm_code, alarm_name, alarm_description,
-   severity, category, cause, check_points, action_method, action_steps, caution, related_parts,
-   owner_team, tags)
+INSERT INTO troubleshooting_guides (guide_type, equipment_model, process_area, code, title, summary)
 VALUES
-('CMP Polisher #1', 'Mirra', 'CMP', 'FAB2-A', 'ALM-1001', 'Slurry Flow Low',
- '슬러리 공급 유량이 설정 하한값 이하로 감소함.',
- 'HIGH', 'Slurry',
- '슬러리 라인 막힘, 펌프 이상, 필터 클로깅, 밸브 오동작.',
- '1) 슬러리 공급 라인 압력 확인\n2) 펌프 동작 상태 확인\n3) 필터 차압 확인',
- '슬러리 라인 및 필터를 점검하고 막힘/클로깅을 제거한 뒤 유량을 정상화한다.',
- '1. 슬러리 공급 밸브 개도 확인\n2. 필터 차압 게이지 확인 후 필요 시 필터 교체\n3. 펌프 재기동 및 유량 회복 확인',
- '슬러리 라인 개방 시 슬러리 분출에 주의. 보호구 착용 필수.',
- 'Slurry Filter, Diaphragm Pump',
- 'CMP설비팀', JSON_ARRAY('slurry','flow')),
-
-('CMP Polisher #2', 'Ebara', 'CMP', 'FAB2-B', 'ALM-2002', 'Head Motor Overload',
- '폴리싱 헤드 구동 모터의 부하가 정격치를 초과함.',
- 'CRITICAL', 'Mechanical',
- '헤드 베어링 마모, 리테이너 링 걸림, 과도한 다운포스, 모터 결함.',
- '1) 헤드 회전 이상음 확인\n2) 다운포스 설정값 확인\n3) 모터 전류값 확인',
- '헤드 구동부의 기계적 걸림 여부를 점검하고 다운포스를 정상 범위로 조정한다.',
- '1. 설비 안전 정지\n2. 헤드 회전부 육안 점검\n3. 리테이너 링/베어링 상태 확인\n4. 다운포스 재설정 후 무부하 시운전',
- '모터 과열 상태에서 재기동 금지. 충분히 냉각 후 조치.',
- 'Head Bearing, Retainer Ring, Drive Motor',
- 'CMP설비팀', JSON_ARRAY('motor','overload')),
-
-('CMP Polisher #3', 'LK', 'CMP', 'FAB3-A', 'ALM-3003', 'Pad Conditioner Position Error',
- '패드 컨디셔너 암의 위치가 목표 좌표에서 벗어남.',
- 'MEDIUM', 'Conditioner',
- '엔코더 오차, 컨디셔너 암 간섭, 서보 캘리브레이션 틀어짐.',
- '1) 컨디셔너 암 이동 경로 간섭물 확인\n2) 엔코더 케이블 연결 확인\n3) 원점 복귀 동작 확인',
- '컨디셔너 암의 원점 복귀를 수행하고 위치 캘리브레이션을 재수행한다.',
- '1. 컨디셔너 암 주변 이물 제거\n2. 원점(Home) 복귀 실행\n3. 위치 캘리브레이션 수행 후 재확인',
- '암 이동 구간에 손을 넣지 말 것.',
- 'Conditioner Arm, Servo Encoder',
- 'CMP설비팀', JSON_ARRAY('conditioner','position')),
-
-('CMP Cleaner #1', 'LKP', 'Clean', 'FAB3-B', 'ALM-4004', 'DIW Temperature High',
- '세정부 초순수(DIW) 온도가 상한을 초과함.',
- 'LOW', 'Utility',
- '히터 제어 이상, 온도센서 드리프트, 냉각 부족.',
- '1) DIW 온도센서 값 확인\n2) 히터 제어 출력 확인\n3) 냉각수 공급 상태 확인',
- 'DIW 온도 제어 루프를 점검하고 냉각수 공급을 정상화한다.',
- '1. 온도센서 지시값 vs 실측 비교\n2. 히터 제어 출력 확인\n3. 냉각수 유량 확인 후 정상화',
- '고온 DIW 접촉 화상 주의.',
- 'DIW Heater, Temp Sensor',
- '유틸팀', JSON_ARRAY('diw','temperature')),
-
-('CMP Polisher #4', 'Mirra', 'CMP', 'FAB2-A', 'ALM-1005', 'Endpoint Signal Loss',
- '연마 종점 검출(EPD) 신호가 소실됨.',
- 'HIGH', 'Process',
- 'EPD 광학계 오염, 광원 열화, 신호 케이블 접속 불량.',
- '1) EPD 윈도우 오염 확인\n2) 광원 출력 확인\n3) 신호 케이블 접속 확인',
- 'EPD 광학 윈도우를 세정하고 광원/케이블 상태를 점검한다.',
- '1. EPD 윈도우 세정\n2. 광원 강도 점검 및 필요 시 교체\n3. 신호 케이블 재접속 후 신호 확인',
- '광학계 세정 시 지정 용제만 사용.',
- 'EPD Window, Light Source',
- 'CMP설비팀', JSON_ARRAY('epd','endpoint'));
+('ALARM', 'Mirra', 'CMP', 'ALM-1001', 'Slurry Flow Low',
+ '슬러리 공급 유량이 설정 하한값 이하로 감소했을 때의 조치 가이드'),
+('ALARM', 'Ebara', 'CMP', 'ALM-2002', 'Head Motor Overload',
+ '폴리싱 헤드 구동 모터 부하가 정격치를 초과했을 때의 조치 가이드'),
+('ALARM', 'LKP', 'Clean', 'ALM-4004', 'DIW Temperature High',
+ '세정부 초순수(DIW) 온도가 상한을 초과했을 때의 조치 가이드'),
+('INTERLOCK', 'Mirra', 'CMP', 'ILK-5001', 'EMO Activated',
+ '비상정지(EMO) 작동으로 설비가 정지되었을 때의 조치 가이드'),
+('INTERLOCK', 'LK', 'CMP', 'DOOR_OPEN_INT', 'Door Open Interlock',
+ '메인 도어 개방으로 구동부 동작이 금지되었을 때의 조치 가이드');
 
 -- ------------------------------------------------------------
--- 인터락 조치 가이드 (5건)
+-- Steps
 -- ------------------------------------------------------------
-INSERT INTO interlock_guides
-  (equipment_name, equipment_model, process, area, interlock_code, interlock_name, interlock_description,
-   severity, category, trigger_condition, cause, check_points, action_method, action_steps,
-   reset_condition, caution, related_parts, owner_team, approval_required, tags)
+
+-- ALM-1001 (Mirra) : Slurry Flow Low
+SET @g := (SELECT id FROM troubleshooting_guides WHERE guide_type='ALARM' AND equipment_model='Mirra' AND code='ALM-1001');
+INSERT INTO troubleshooting_steps
+  (guide_id, step_order, step_title, description, decision_question, normal_result_text, next_step_order, caution)
 VALUES
-('CMP Polisher #1', 'Mirra', 'CMP', 'FAB2-A', 'ILK-5001', 'EMO Activated',
- '비상정지(EMO) 버튼이 작동하여 설비 전체가 정지됨.',
- 'CRITICAL', 'Safety',
- 'EMO 버튼 눌림 또는 EMO 회로 개방.',
- '작업자에 의한 EMO 조작, 안전회로 단선, EMO 접점 불량.',
- '1) 눌린 EMO 버튼 위치 확인\n2) 안전회로 연속성 확인\n3) 설비 주변 안전 상태 확인',
- '위험 요소를 제거하고 안전을 확인한 후 EMO를 해제하고 정상 절차로 복귀한다.',
- '1. 설비 주변 인원/이상 상태 확인\n2. 눌린 EMO 버튼 복귀\n3. 안전회로 정상 확인\n4. 규정 절차에 따라 재기동',
- '모든 위험요소 제거 및 안전 확인 후에만 리셋 가능.',
- '안전 담당자 확인 완료',
- 'EMO Button, Safety Relay',
- '안전팀', TRUE, JSON_ARRAY('emo','safety')),
+(@g, 1, '슬러리 공급 압력 확인', '슬러리 공급 라인의 압력 게이지를 확인한다.',
+ '공급 압력이 정상 범위인가요?', '압력 정상. 유량계 표시값을 확인하세요.', 2, '슬러리 라인 개방 시 분출 주의, 보호구 착용.'),
+(@g, 2, '필터 차압 확인', '슬러리 필터 차압 게이지를 확인하고 클로깅 여부를 판단한다.',
+ '필터 차압이 정상 범위인가요?', '필터 정상. 펌프 동작을 확인하세요.', 3, NULL),
+(@g, 3, '펌프 상태 확인 및 재기동', '다이어프램 펌프 동작 상태를 확인하고 필요 시 재기동한다.',
+ '펌프 재기동 후 유량이 회복되었나요?', '유량 정상 회복. 조치 완료.', NULL, '해결되지 않으면 설비 담당자에게 문의하세요.');
 
-('CMP Polisher #2', 'Ebara', 'CMP', 'FAB2-B', 'ILK-5002', 'Slurry Leak Detected',
- '슬러리 누액 감지 센서가 누액을 검출하여 공급을 차단함.',
- 'HIGH', 'Chemical',
- '누액 감지 센서 트립.',
- '슬러리 라인/피팅 누액, 드레인 막힘, 센서 오검출.',
- '1) 누액 위치 및 범위 확인\n2) 라인/피팅 상태 확인\n3) 센서 정상 여부 확인',
- '누액 원인을 제거하고 누액 부위를 세정/건조한 뒤 인터락을 해제한다.',
- '1. 누액 지점 확인 및 격리\n2. 라인/피팅 조임 또는 교체\n3. 누액 세정 및 건조\n4. 센서 정상 확인 후 리셋',
- '누액이 완전히 제거되고 센서가 정상 복귀되어야 리셋 가능.',
- '누액 방지 처리 완료, 보호구 착용',
- 'Leak Sensor, Slurry Fitting',
- 'CMP설비팀', TRUE, JSON_ARRAY('leak','slurry')),
+-- ALM-2002 (Ebara) : Head Motor Overload
+SET @g := (SELECT id FROM troubleshooting_guides WHERE guide_type='ALARM' AND equipment_model='Ebara' AND code='ALM-2002');
+INSERT INTO troubleshooting_steps
+  (guide_id, step_order, step_title, description, decision_question, normal_result_text, next_step_order, caution)
+VALUES
+(@g, 1, '헤드 회전 이상음 확인', '설비를 안전 정지하고 헤드 회전부의 이상음/걸림을 육안 점검한다.',
+ '기계적 걸림이나 이상음이 없나요?', '기계부 정상. 다운포스 설정을 확인하세요.', 2, '모터 과열 상태에서 재기동 금지, 충분히 냉각.'),
+(@g, 2, '다운포스 재설정 및 시운전', '다운포스를 정상 범위로 재설정하고 무부하 시운전한다.',
+ '무부하 시운전이 정상인가요?', '정상 확인. 조치 완료.', NULL, '리테이너 링/베어링 마모 의심 시 담당자 문의.');
 
-('CMP Polisher #3', 'LK', 'CMP', 'FAB3-A', 'ILK-5003', 'Door Open Interlock',
- '메인 도어 개방으로 구동부 동작이 금지됨.',
- 'MEDIUM', 'Safety',
- '메인 도어 오픈 상태 감지.',
- '도어 개방 후 미폐쇄, 도어 스위치 접점 불량.',
- '1) 도어 완전 폐쇄 여부 확인\n2) 도어 스위치 접점 확인\n3) 도어 정렬 상태 확인',
- '도어를 완전히 닫고 도어 스위치 정상 동작을 확인한 후 인터락을 해제한다.',
- '1. 설비 내부 인원/공구 잔류 확인\n2. 도어 완전 폐쇄\n3. 도어 스위치 신호 확인 후 리셋',
- '내부 인원 및 공구 잔류 없음을 확인한 후 도어 폐쇄.',
- '내부 안전 확인 필수',
- 'Door Switch',
- '안전팀', FALSE, JSON_ARRAY('door','safety')),
+-- ALM-4004 (LKP) : DIW Temperature High
+SET @g := (SELECT id FROM troubleshooting_guides WHERE guide_type='ALARM' AND equipment_model='LKP' AND code='ALM-4004');
+INSERT INTO troubleshooting_steps
+  (guide_id, step_order, step_title, description, decision_question, normal_result_text, next_step_order, caution)
+VALUES
+(@g, 1, 'DIW 온도센서 확인', 'DIW 온도센서 지시값과 실측값을 비교한다.',
+ '센서 지시값이 실측과 일치하나요?', '센서 정상. 냉각수 공급을 확인하세요.', 2, '고온 DIW 접촉 화상 주의.'),
+(@g, 2, '냉각수 공급 확인', '냉각수 유량 및 공급 상태를 확인하고 정상화한다.',
+ '냉각수 공급이 정상인가요?', '냉각 정상. 조치 완료.', NULL, NULL);
 
-('CMP Cleaner #1', 'LKP', 'Clean', 'FAB3-B', 'ILK-5004', 'DIW Supply Fail',
- '초순수(DIW) 공급 실패로 세정 공정이 인터락됨.',
- 'HIGH', 'Utility',
- 'DIW 공급 압력 하한 도달.',
- 'DIW 공급 라인 차단, 밸브 폐쇄, 공급 설비 이상.',
- '1) DIW 공급 압력 확인\n2) 공급 밸브 개도 확인\n3) 상위 공급 설비 상태 확인',
- 'DIW 공급 계통을 점검하여 공급을 정상화한 후 인터락을 해제한다.',
- '1. DIW 공급 압력 확인\n2. 밸브 개도 및 라인 점검\n3. 공급 정상화 후 리셋',
- 'DIW 공급 압력이 정상 범위로 회복되어야 리셋 가능.',
- '건식 세정 상태 진행 금지',
- 'DIW Valve, Pressure Sensor',
- '유틸팀', FALSE, JSON_ARRAY('diw','utility')),
+-- ILK-5001 (Mirra) : EMO Activated
+SET @g := (SELECT id FROM troubleshooting_guides WHERE guide_type='INTERLOCK' AND equipment_model='Mirra' AND code='ILK-5001');
+INSERT INTO troubleshooting_steps
+  (guide_id, step_order, step_title, description, decision_question, normal_result_text, next_step_order, caution)
+VALUES
+(@g, 1, '설비 주변 안전 확인', '설비 주변 인원 및 이상 상태를 확인한다.',
+ '설비 주변이 안전한 상태인가요?', '안전 확인됨. 눌린 EMO 버튼을 확인하세요.', 2, '모든 위험요소 제거 후에만 진행.'),
+(@g, 2, 'EMO 버튼 복귀 및 재기동', '눌린 EMO 버튼을 복귀하고 안전회로 정상 확인 후 규정 절차로 재기동한다.',
+ '안전회로가 정상 복귀되었나요?', '정상 복귀. 규정 절차에 따라 재기동하세요.', NULL, '안전 담당자 확인 완료 후에만 리셋.');
 
-('CMP Polisher #4', 'Mirra', 'CMP', 'FAB2-A', 'ILK-5005', 'Over Down-force Interlock',
- '헤드 다운포스가 안전 상한을 초과하여 인터락됨.',
- 'CRITICAL', 'Process',
- '다운포스 측정값이 안전 상한 초과.',
- '다운포스 제어 이상, 로드셀 캘리브레이션 오차, 설정값 오입력.',
- '1) 다운포스 실측값 확인\n2) 로드셀 캘리브레이션 상태 확인\n3) 레시피 설정값 확인',
- '다운포스 제어계를 점검하고 로드셀 캘리브레이션 및 레시피 값을 정상화한다.',
- '1. 다운포스 제어 출력 확인\n2. 로드셀 캘리브레이션 수행\n3. 레시피 설정값 재확인\n4. 정상 확인 후 리셋',
- '다운포스가 안전 범위로 확인되기 전까지 웨이퍼 로드 금지.',
- '로드셀 검교정 완료',
- 'Load Cell, Down-force Controller',
- 'CMP설비팀', TRUE, JSON_ARRAY('downforce','process'));
+-- DOOR_OPEN_INT (LK) : Door Open Interlock
+SET @g := (SELECT id FROM troubleshooting_guides WHERE guide_type='INTERLOCK' AND equipment_model='LK' AND code='DOOR_OPEN_INT');
+INSERT INTO troubleshooting_steps
+  (guide_id, step_order, step_title, description, decision_question, normal_result_text, next_step_order, caution)
+VALUES
+(@g, 1, 'Door Sensor 상태 확인', 'Door sensor LED 상태를 확인한다.',
+ 'Sensor LED가 정상 점등 상태인가요?', '정상으로 판단되어 추가 조치가 필요하지 않습니다.', 2, 'Door 개방 시 안전에 유의.'),
+(@g, 2, 'Door 폐쇄 및 리셋', '내부 인원/공구 잔류를 확인하고 도어를 완전히 닫은 뒤 리셋한다.',
+ '도어 스위치 신호가 정상인가요?', '정상 확인. 조치 완료.', NULL, '내부 안전 확인 필수.');

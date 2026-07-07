@@ -5,17 +5,15 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-import LockIcon from "@mui/icons-material/Lock";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 export const SIDEBAR_WIDTH = 240;
 
 const NAV = [
-  { to: "/alarms", label: "알람 조치 가이드", icon: <NotificationsActiveIcon /> },
-  { to: "/interlocks", label: "인터락 조치 가이드", icon: <LockIcon /> },
-  { to: "/import", label: "파일 업로드", icon: <UploadFileIcon /> },
+  { to: "/guides", label: "트러블슈팅 가이드", icon: <MenuBookIcon /> },
+  { to: "/import", label: "CSV/XLSX 업로드", icon: <UploadFileIcon /> },
   { to: "/settings", label: "설정", icon: <SettingsIcon /> },
 ];
 
@@ -37,10 +35,10 @@ export default function Sidebar() {
     >
       <Box sx={{ px: 2.5, py: 2.5 }}>
         <Typography variant="h6" color="primary" sx={{ lineHeight: 1.2 }}>
-          CMP 조치 가이드
+          트러블슈팅 가이드
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          알람 / 인터락 지식관리
+          설비모델별 조치 지식관리
         </Typography>
       </Box>
       <List sx={{ px: 1 }}>

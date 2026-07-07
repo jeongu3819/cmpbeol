@@ -1,41 +1,31 @@
 from sqlalchemy import (
-    JSON,
     TIMESTAMP,
     Boolean,
     Column,
     Enum,
+    ForeignKey,
     Integer,
     String,
     Text,
     func,
 )
+from sqlalchemy.orm import relationship
 
 from .database import Base
 
-SEVERITY_VALUES = ("LOW", "MEDIUM", "HIGH", "CRITICAL")
+GUIDE_TYPE_VALUES = ("ALARM", "INTERLOCK")
 
 
-class AlarmGuide(Base):
-    __tablename__ = "alarm_guides"
+class TroubleshootingGuide(Base):
+    __tablename__ = "troubleshooting_guides"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    equipment_name = Column(String(100), nullable=True)
-    equipment_model = Column(String(100), nullable=True)
-    process = Column(String(100), nullable=True)
-    area = Column(String(100), nullable=True)
-    alarm_code = Column(String(100), nullable=False)
-    alarm_name = Column(String(300), nullable=False)
-    alarm_description = Column(Text, nullable=True)
-    severity = Column(Enum(*SEVERITY_VALUES, name="severity"), nullable=False, default="MEDIUM")
-    category = Column(String(100), nullable=True)
-    cause = Column(Text, nullable=True)
-    check_points = Column(Text, nullable=True)
-    action_method = Column(Text, nullable=True)
-    action_steps = Column(Text, nullable=True)
-    caution = Column(Text, nullable=True)
-    related_parts = Column(Text, nullable=True)
-    owner_team = Column(String(100), nullable=True)
-    tags = Column(JSON, nullable=True)
+    guide_type = Column(Enum(*GUIDE_TYPE_VALUES, name="guide_type"), nullable=False)
+    equipment_model = Column(String(100), nullable=False)
+    process_area = Column(String(100), nullable=True)
+    code = Column(String(100), nullable=False)
+    title = Column(String(300), nullable=False)
+    summary = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(
@@ -44,38 +34,63 @@ class AlarmGuide(Base):
         onupdate=func.current_timestamp(),
     )
 
+    steps = relationship(
+        "TroubleshootingStep",
+        back_populates="guide",
+        cascade="all, delete-orphan",
+        order_by="TroubleshootingStep.step_order",
+    )
 
-class InterlockGuide(Base):
-    __tablename__ = "interlock_guides"
+
+class TroubleshootingStep(Base):
+    __tablename__ = "troubleshooting_steps"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    equipment_name = Column(String(100), nullable=True)
-    equipment_model = Column(String(100), nullable=True)
-    process = Column(String(100), nullable=True)
-    area = Column(String(100), nullable=True)
-    interlock_code = Column(String(100), nullable=False)
-    interlock_name = Column(String(300), nullable=False)
-    interlock_description = Column(Text, nullable=True)
-    severity = Column(Enum(*SEVERITY_VALUES, name="severity"), nullable=False, default="HIGH")
-    category = Column(String(100), nullable=True)
-    trigger_condition = Column(Text, nullable=True)
-    cause = Column(Text, nullable=True)
-    check_points = Column(Text, nullable=True)
-    action_method = Column(Text, nullable=True)
-    action_steps = Column(Text, nullable=True)
-    reset_condition = Column(Text, nullable=True)
+    guide_id = Column(
+        Integer,
+        ForeignKey("troubleshooting_guides.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    step_order = Column(Integer, nullable=False)
+    step_title = Column(String(300), nullable=True)
+    description = Column(Text, nullable=True)
+    decision_question = Column(Text, nullable=True)
+    normal_label = Column(String(100), nullable=False, default="정상 / 조치 완료")
+    normal_result_text = Column(Text, nullable=True)
+    next_label = Column(String(100), nullable=False, default="추가 판단 필요")
+    next_step_order = Column(Integer, nullable=True)
     caution = Column(Text, nullable=True)
-    related_parts = Column(Text, nullable=True)
-    owner_team = Column(String(100), nullable=True)
-    approval_required = Column(Boolean, nullable=False, default=False)
-    tags = Column(JSON, nullable=True)
-    is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(
         TIMESTAMP,
         server_default=func.current_timestamp(),
         onupdate=func.current_timestamp(),
     )
+
+    guide = relationship("TroubleshootingGuide", back_populates="steps")
+    images = relationship(
+        "TroubleshootingStepImage",
+        back_populates="step",
+        cascade="all, delete-orphan",
+        order_by="TroubleshootingStepImage.sort_order",
+    )
+
+
+class TroubleshootingStepImage(Base):
+    __tablename__ = "troubleshooting_step_images"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    step_id = Column(
+        Integer,
+        ForeignKey("troubleshooting_steps.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    image_url = Column(String(500), nullable=False)
+    original_filename = Column(String(255), nullable=True)
+    sort_order = Column(Integer, nullable=False, default=1)
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+
+    step = relationship("TroubleshootingStep", back_populates="images")
 
 
 class ImportJob(Base):

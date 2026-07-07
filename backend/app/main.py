@@ -1,13 +1,16 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .routers import alarm_guides, import_router, interlock_guides
+from .routers import guides, import_router
 
 app = FastAPI(
-    title="설비 알람/인터락 조치 가이드 관리 API",
-    description="CMP 설비 알람/인터락 조치방법 지식관리 MVP",
-    version="1.0.0",
+    title="트러블슈팅 가이드 관리 API",
+    description="설비모델별 알람/인터락 조치 가이드(Step Flow) 지식관리 MVP",
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -18,8 +21,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(alarm_guides.router)
-app.include_router(interlock_guides.router)
+# 업로드 이미지 정적 서빙
+os.makedirs(settings.upload_steps_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.upload_root), name="uploads")
+
+app.include_router(guides.router)
 app.include_router(import_router.router)
 
 
