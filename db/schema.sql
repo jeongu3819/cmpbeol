@@ -1,26 +1,21 @@
 -- ============================================================
--- 트러블슈팅 가이드 (알람/인터락 조치 가이드) - Schema
+-- 트러블슈팅 가이드 (알람/인터락 조치 가이드) - Schema (참고용)
 -- MySQL 8.0+
+--
+-- 주의: 이 스크립트는 참고용이며 앱 실행 시 자동으로 실행되지 않습니다.
+--       필요한 테이블이 없을 때만 수동으로 실행하세요.
+--       CREATE TABLE IF NOT EXISTS 로 작성되어 기존 테이블/데이터는 건드리지 않습니다.
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS cmp_guide
-  DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_unicode_ci;
-
-USE cmp_guide;
-
--- 기존 구조 제거 (있는 경우)
-DROP TABLE IF EXISTS troubleshooting_step_images;
-DROP TABLE IF EXISTS troubleshooting_steps;
-DROP TABLE IF EXISTS troubleshooting_guides;
-DROP TABLE IF EXISTS alarm_guides;
-DROP TABLE IF EXISTS interlock_guides;
+-- 이미 HeidiSQL 등에서 cmpbeol DB 를 만들어 두었다고 가정합니다.
+-- (없다면: CREATE DATABASE IF NOT EXISTS cmpbeol DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;)
+USE cmpbeol;
 
 -- ------------------------------------------------------------
 -- 1. troubleshooting_guides
 --    설비모델별 알람/인터락 조치 가이드 (기본 정보)
 -- ------------------------------------------------------------
-CREATE TABLE troubleshooting_guides (
+CREATE TABLE IF NOT EXISTS troubleshooting_guides (
   id              INT PRIMARY KEY AUTO_INCREMENT,
   guide_type      ENUM('ALARM','INTERLOCK') NOT NULL,
   equipment_model VARCHAR(100) NOT NULL,
@@ -39,20 +34,13 @@ CREATE TABLE troubleshooting_guides (
 
 -- ------------------------------------------------------------
 -- 2. troubleshooting_steps
---    가이드별 단계(Step) 카드
+--    가이드별 단계(Step) 카드 - 이미지 + 텍스트 설명만 보유
 -- ------------------------------------------------------------
-CREATE TABLE troubleshooting_steps (
+CREATE TABLE IF NOT EXISTS troubleshooting_steps (
   id                 INT PRIMARY KEY AUTO_INCREMENT,
   guide_id           INT NOT NULL,
   step_order         INT NOT NULL,
-  step_title         VARCHAR(300) NULL,
   description        TEXT NULL,
-  decision_question  TEXT NULL,
-  normal_label       VARCHAR(100) NOT NULL DEFAULT '정상 / 조치 완료',
-  normal_result_text TEXT NULL,
-  next_label         VARCHAR(100) NOT NULL DEFAULT '추가 판단 필요',
-  next_step_order    INT NULL,
-  caution            TEXT NULL,
   created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_step_guide (guide_id),
@@ -64,7 +52,7 @@ CREATE TABLE troubleshooting_steps (
 -- 3. troubleshooting_step_images
 --    Step별 첨부 이미지
 -- ------------------------------------------------------------
-CREATE TABLE troubleshooting_step_images (
+CREATE TABLE IF NOT EXISTS troubleshooting_step_images (
   id                INT PRIMARY KEY AUTO_INCREMENT,
   step_id           INT NOT NULL,
   image_url         VARCHAR(500) NOT NULL,
@@ -79,8 +67,7 @@ CREATE TABLE troubleshooting_step_images (
 -- ------------------------------------------------------------
 -- 4. import_jobs
 -- ------------------------------------------------------------
-DROP TABLE IF EXISTS import_jobs;
-CREATE TABLE import_jobs (
+CREATE TABLE IF NOT EXISTS import_jobs (
   id            INT PRIMARY KEY AUTO_INCREMENT,
   import_type   ENUM('ALARM','INTERLOCK') NOT NULL,
   filename      VARCHAR(255) NOT NULL,

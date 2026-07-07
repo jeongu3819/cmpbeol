@@ -30,11 +30,6 @@ def _sync_steps(guide: models.TroubleshootingGuide, steps: list[schemas.StepInpu
 
     for item in steps:
         data = item.model_dump(exclude={"id"})
-        # 기본값 보정
-        if not data.get("normal_label"):
-            data["normal_label"] = schemas.DEFAULT_NORMAL_LABEL
-        if not data.get("next_label"):
-            data["next_label"] = schemas.DEFAULT_NEXT_LABEL
 
         if item.id and item.id in existing:
             step = existing[item.id]

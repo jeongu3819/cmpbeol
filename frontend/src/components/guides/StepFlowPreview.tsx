@@ -34,9 +34,7 @@ export default function StepFlowPreview({
             sx={{ display: "flex", alignItems: "center", gap: 1 }}
           >
             <Chip
-              label={`Step ${step.step_order}${
-                step.step_title ? ` · ${step.step_title}` : ""
-              }`}
+              label={`Step ${step.step_order}`}
               size="small"
               onClick={onSelect ? () => onSelect(step.step_order) : undefined}
               variant={active ? "filled" : "outlined"}

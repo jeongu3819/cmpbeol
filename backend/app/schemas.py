@@ -6,9 +6,6 @@ from pydantic import BaseModel, ConfigDict, Field
 GuideType = Literal["ALARM", "INTERLOCK"]
 ImportType = Literal["ALARM", "INTERLOCK"]
 
-DEFAULT_NORMAL_LABEL = "정상 / 조치 완료"
-DEFAULT_NEXT_LABEL = "추가 판단 필요"
-
 
 # ---------------------------------------------------------------------------
 # Step Image
@@ -22,18 +19,11 @@ class StepImageOut(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Step
+# Step (이미지 + 텍스트 설명만 입력받는다)
 # ---------------------------------------------------------------------------
 class StepBase(BaseModel):
     step_order: int
-    step_title: Optional[str] = None
     description: Optional[str] = None
-    decision_question: Optional[str] = None
-    normal_label: Optional[str] = DEFAULT_NORMAL_LABEL
-    normal_result_text: Optional[str] = None
-    next_label: Optional[str] = DEFAULT_NEXT_LABEL
-    next_step_order: Optional[int] = None
-    caution: Optional[str] = None
 
 
 class StepInput(StepBase):

@@ -16,6 +16,7 @@ import { fetchGuides } from "../api/guideApi";
 import type { GuideFilters } from "../types/guide";
 import type { GuideType } from "../types/common";
 import GuideTable from "../components/guides/GuideTable";
+import NewGuideTypeDialog from "../components/guides/NewGuideTypeDialog";
 import SearchInput from "../components/common/SearchInput";
 import LoadingState from "../components/common/LoadingState";
 
@@ -25,6 +26,7 @@ export default function GuidesPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<TabValue>("ALL");
+  const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [filters, setFilters] = useState<GuideFilters>({
     q: searchParams.get("q") ?? "",
     equipment_model: "",
@@ -72,12 +74,21 @@ export default function GuidesPage() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => navigate("/guides/new")}
+            onClick={() => setNewDialogOpen(true)}
           >
             새 가이드 등록
           </Button>
         </Stack>
       </Stack>
+
+      <NewGuideTypeDialog
+        open={newDialogOpen}
+        onClose={() => setNewDialogOpen(false)}
+        onSelect={(type) => {
+          setNewDialogOpen(false);
+          navigate(`/guides/new?type=${type}`);
+        }}
+      />
 
       <Paper variant="outlined" sx={{ mb: 2 }}>
         <Tabs

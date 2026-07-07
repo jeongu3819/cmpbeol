@@ -5,22 +5,25 @@ import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Stack from "@mui/material/Stack";
 import StepBuilder from "./StepBuilder";
+import GuideTypeBadge from "./GuideTypeBadge";
 import type { Guide, GuideInput, Step } from "../../types/guide";
 import type { GuideType } from "../../types/common";
+import { guideTypeLabels } from "../../types/common";
 
 interface Props {
+  /** 신규 등록 시 상단 모달에서 선택된 타입 (수정 시에는 initial 값 사용) */
+  guideType?: GuideType;
   initial?: Partial<Guide>;
   submitting?: boolean;
   onSubmit: (payload: GuideInput) => void;
   onCancel: () => void;
 }
 
-function toInput(initial?: Partial<Guide>): GuideInput {
+function toInput(guideType: GuideType, initial?: Partial<Guide>): GuideInput {
   return {
-    guide_type: initial?.guide_type ?? "ALARM",
+    guide_type: initial?.guide_type ?? guideType,
     equipment_model: initial?.equipment_model ?? "",
     process_area: initial?.process_area ?? "",
     code: initial?.code ?? "",
@@ -32,13 +35,16 @@ function toInput(initial?: Partial<Guide>): GuideInput {
 }
 
 export default function GuideForm({
+  guideType = "ALARM",
   initial,
   submitting,
   onSubmit,
   onCancel,
 }: Props) {
-  const [form, setForm] = useState<GuideInput>(toInput(initial));
+  const [form, setForm] = useState<GuideInput>(toInput(guideType, initial));
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+  const labels = guideTypeLabels(form.guide_type);
 
   const set =
     (key: keyof GuideInput) =>
@@ -62,22 +68,12 @@ export default function GuideForm({
   return (
     <Box component="form" onSubmit={handleSubmit}>
       <Paper variant="outlined" sx={{ p: 3, mb: 2 }}>
-        <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-          기본 정보
-        </Typography>
-
-        <ToggleButtonGroup
-          value={form.guide_type}
-          exclusive
-          size="small"
-          onChange={(_, v: GuideType | null) =>
-            v && setForm((f) => ({ ...f, guide_type: v }))
-          }
-          sx={{ mb: 2 }}
-        >
-          <ToggleButton value="ALARM">알람</ToggleButton>
-          <ToggleButton value="INTERLOCK">인터락</ToggleButton>
-        </ToggleButtonGroup>
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+          <GuideTypeBadge type={form.guide_type} size="medium" />
+          <Typography variant="subtitle1" fontWeight={700}>
+            {labels.type} 기본 정보
+          </Typography>
+        </Stack>
 
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -88,7 +84,9 @@ export default function GuideForm({
               value={form.equipment_model}
               onChange={set("equipment_model")}
               error={errors.equipment_model}
-              helperText={errors.equipment_model ? "필수 항목입니다." : "예: Mirra, Ebara, LK, LKP"}
+              helperText={
+                errors.equipment_model ? "필수 항목입니다." : "예: Mirra, Ebara, LK, LKP"
+              }
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -103,29 +101,29 @@ export default function GuideForm({
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
-              label="코드 *"
+              label={`${labels.code} *`}
               fullWidth
               size="small"
               value={form.code}
               onChange={set("code")}
               error={errors.code}
-              helperText={errors.code ? "필수 항목입니다." : "알람/인터락 코드"}
+              helperText={errors.code ? "필수 항목입니다." : undefined}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
-              label="제목 *"
+              label={`${labels.title} *`}
               fullWidth
               size="small"
               value={form.title}
               onChange={set("title")}
               error={errors.title}
-              helperText={errors.title ? "필수 항목입니다." : "알람명 / 인터락명"}
+              helperText={errors.title ? "필수 항목입니다." : undefined}
             />
           </Grid>
           <Grid size={12}>
             <TextField
-              label="요약 설명"
+              label={labels.summary}
               fullWidth
               size="small"
               multiline

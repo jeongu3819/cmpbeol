@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 
 from . import import_config as cfg
-from .models import ImportJob, TroubleshootingGuide, TroubleshootingStep, TroubleshootingStepImage
+from .models import ImportJob, TroubleshootingGuide, TroubleshootingStep
 
 
 def parse_file(filename: str, content: bytes) -> pd.DataFrame:
@@ -121,46 +121,17 @@ def build_preview(db: Session, df: pd.DataFrame) -> dict[str, Any]:
 
 
 def _build_steps_from_row(row: dict[str, Any]) -> list[dict[str, Any]]:
-    """step1~N 컬럼에서 step dict 목록을 생성. 내용이 있는 step 만 포함."""
-    raw_steps: list[dict[str, Any]] = []
+    """step1~N_description 컬럼에서 step dict 목록을 생성. 설명이 있는 step 만 포함."""
+    steps: list[dict[str, Any]] = []
     for i in range(1, cfg.MAX_STEPS + 1):
-        title = _clean(row.get(f"step{i}_title"))
         description = _clean(row.get(f"step{i}_description"))
-        question = _clean(row.get(f"step{i}_question"))
-        normal_result = _clean(row.get(f"step{i}_normal_result"))
-        caution = _clean(row.get(f"step{i}_caution"))
-        image_url = _clean(row.get(f"step{i}_image_url"))
-
-        if any([title, description, question, normal_result, caution, image_url]):
-            raw_steps.append(
+        if description:
+            steps.append(
                 {
-                    "step_title": title or None,
-                    "description": description or None,
-                    "decision_question": question or None,
-                    "normal_result_text": normal_result or None,
-                    "caution": caution or None,
-                    "image_url": image_url or None,
+                    "step_order": len(steps) + 1,
+                    "description": description,
                 }
             )
-
-    steps: list[dict[str, Any]] = []
-    for pos, s in enumerate(raw_steps):
-        order = pos + 1
-        is_last = pos == len(raw_steps) - 1
-        steps.append(
-            {
-                "step_order": order,
-                "step_title": s["step_title"],
-                "description": s["description"],
-                "decision_question": s["decision_question"],
-                "normal_label": "정상 / 조치 완료",
-                "normal_result_text": s["normal_result_text"],
-                "next_label": "추가 판단 필요",
-                "next_step_order": None if is_last else order + 1,
-                "caution": s["caution"],
-                "image_url": s["image_url"],
-            }
-        )
     return steps
 
 
@@ -206,13 +177,7 @@ def confirm_import(db: Session, filename: str, rows: list[dict[str, Any]]) -> di
                 guide.steps.clear()
                 db.flush()
                 for sd in step_dicts:
-                    image_url = sd.pop("image_url", None)
-                    step = TroubleshootingStep(**sd)
-                    if image_url:
-                        step.images.append(
-                            TroubleshootingStepImage(image_url=image_url, sort_order=1)
-                        )
-                    guide.steps.append(step)
+                    guide.steps.append(TroubleshootingStep(**sd))
 
             if is_new:
                 created += 1

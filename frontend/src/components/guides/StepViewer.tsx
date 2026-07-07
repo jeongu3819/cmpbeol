@@ -10,23 +10,20 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ReplayIcon from "@mui/icons-material/Replay";
 import ImageNotSupportedIcon from "@mui/icons-material/ImageNotSupported";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import StepFlowPreview from "./StepFlowPreview";
 import { resolveImageUrl } from "../../api/guideApi";
-import {
-  DEFAULT_NEXT_LABEL,
-  DEFAULT_NORMAL_LABEL,
-} from "../../types/guide";
 import type { Step } from "../../types/guide";
 
 interface Props {
   steps: Step[];
 }
 
-type Ending = { type: "normal" | "final"; message: string } | null;
+type Ending = { type: "done" | "escalate" } | null;
 
-const FINAL_MESSAGE =
-  "조치를 완료했습니다. 문제가 지속되면 상위 담당자에게 문의하세요.";
+const DONE_MESSAGE = "조치가 완료되었습니다.";
+const ESCALATE_MESSAGE =
+  "추가 확인이 필요합니다. 담당자 또는 상위 엔지니어에게 문의하세요.";
 
 export default function StepViewer({ steps }: Props) {
   const ordered = useMemo(
@@ -38,7 +35,8 @@ export default function StepViewer({ steps }: Props) {
   const [currentOrder, setCurrentOrder] = useState<number | null>(firstOrder);
   const [ending, setEnding] = useState<Ending>(null);
 
-  const current = ordered.find((s) => s.step_order === currentOrder) ?? null;
+  const currentIndex = ordered.findIndex((s) => s.step_order === currentOrder);
+  const current = currentIndex >= 0 ? ordered[currentIndex] : null;
 
   const reset = () => {
     setEnding(null);
@@ -54,6 +52,7 @@ export default function StepViewer({ steps }: Props) {
   }
 
   if (ending) {
+    const isDone = ending.type === "done";
     return (
       <Paper
         variant="outlined"
@@ -61,28 +60,22 @@ export default function StepViewer({ steps }: Props) {
           p: 4,
           textAlign: "center",
           borderRadius: 3,
-          bgcolor: ending.type === "normal" ? "#f0fdf4" : "#f8fafc",
+          bgcolor: isDone ? "#f0fdf4" : "#fffbeb",
         }}
       >
-        <CheckCircleIcon
-          sx={{
-            fontSize: 56,
-            color: ending.type === "normal" ? "#16a34a" : "#0f172a",
-            mb: 1,
-          }}
-        />
+        {isDone ? (
+          <CheckCircleIcon sx={{ fontSize: 56, color: "#16a34a", mb: 1 }} />
+        ) : (
+          <SupportAgentIcon sx={{ fontSize: 56, color: "#b45309", mb: 1 }} />
+        )}
         <Typography variant="h6" gutterBottom>
-          {ending.type === "normal" ? "조치 완료" : "가이드 종료"}
+          {isDone ? "조치 완료" : "추가 확인 필요"}
         </Typography>
-        <Typography color="text.secondary" sx={{ mb: 3, whiteSpace: "pre-wrap" }}>
-          {ending.message}
+        <Typography color="text.secondary" sx={{ mb: 3 }}>
+          {isDone ? DONE_MESSAGE : ESCALATE_MESSAGE}
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<ReplayIcon />}
-          onClick={reset}
-        >
-          가이드 처음으로 돌아가기
+        <Button variant="contained" startIcon={<ReplayIcon />} onClick={reset}>
+          처음으로 돌아가기
         </Button>
       </Paper>
     );
@@ -90,30 +83,19 @@ export default function StepViewer({ steps }: Props) {
 
   if (!current) return null;
 
-  const normalLabel = current.normal_label || DEFAULT_NORMAL_LABEL;
-  const nextLabel = current.next_label || DEFAULT_NEXT_LABEL;
-  const hasNext =
-    current.next_step_order != null &&
-    ordered.some((s) => s.step_order === current.next_step_order);
+  const isLast = currentIndex === ordered.length - 1;
 
-  const handleNormal = () => {
-    setEnding({
-      type: "normal",
-      message:
-        current.normal_result_text ||
-        "정상으로 판단되어 추가 조치가 필요하지 않습니다.",
-    });
-  };
+  const handleDone = () => setEnding({ type: "done" });
 
   const handleNext = () => {
-    if (hasNext) {
-      setCurrentOrder(current.next_step_order!);
+    if (!isLast) {
+      setCurrentOrder(ordered[currentIndex + 1].step_order);
     } else {
-      setEnding({ type: "final", message: FINAL_MESSAGE });
+      setEnding({ type: "escalate" });
     }
   };
 
-  const images = current.images ?? [];
+  const image = current.images?.[0] ?? null;
 
   return (
     <Box>
@@ -129,38 +111,30 @@ export default function StepViewer({ steps }: Props) {
       <Paper variant="outlined" sx={{ borderRadius: 3, overflow: "hidden", mt: 1 }}>
         <Box sx={{ px: 3, py: 2, bgcolor: "#f8fafc" }}>
           <Typography variant="h6" fontWeight={700}>
-            Step {current.step_order}
-            {current.step_title ? `. ${current.step_title}` : ""}
+            Step {current.step_order} / {ordered.length}
           </Typography>
         </Box>
         <Divider />
 
         <Box sx={{ p: 3 }}>
           {/* 이미지 영역 */}
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1.5,
-              flexWrap: "wrap",
-              mb: 2,
-            }}
-          >
-            {images.length > 0 ? (
-              images.map((img) => (
-                <Box
-                  key={img.id}
-                  component="img"
-                  src={resolveImageUrl(img.image_url)}
-                  alt={img.original_filename ?? "step"}
-                  sx={{
-                    maxWidth: "100%",
-                    maxHeight: 360,
-                    borderRadius: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                  }}
-                />
-              ))
+          <Box sx={{ mb: 2 }}>
+            {image ? (
+              <Box
+                component="img"
+                src={resolveImageUrl(image.image_url)}
+                alt={image.original_filename ?? "step"}
+                sx={{
+                  display: "block",
+                  width: "100%",
+                  maxHeight: 400,
+                  objectFit: "contain",
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  bgcolor: "#f8fafc",
+                }}
+              />
             ) : (
               <Box
                 sx={{
@@ -183,37 +157,9 @@ export default function StepViewer({ steps }: Props) {
 
           {/* 텍스트 설명 */}
           {current.description && (
-            <Typography sx={{ mb: 2, whiteSpace: "pre-wrap" }}>
+            <Typography sx={{ mb: 2.5, whiteSpace: "pre-wrap", fontSize: 16 }}>
               {current.description}
             </Typography>
-          )}
-
-          {/* 주의사항 */}
-          {current.caution && (
-            <Alert
-              icon={<WarningAmberIcon />}
-              severity="warning"
-              sx={{ mb: 2, whiteSpace: "pre-wrap" }}
-            >
-              {current.caution}
-            </Alert>
-          )}
-
-          {/* 판단 질문 */}
-          {current.decision_question && (
-            <Box
-              sx={{
-                p: 2,
-                mb: 2.5,
-                borderRadius: 2,
-                bgcolor: "#eff6ff",
-                border: "1px solid #bfdbfe",
-              }}
-            >
-              <Typography variant="h6" fontWeight={700} sx={{ color: "#1e3a8a" }}>
-                {current.decision_question}
-              </Typography>
-            </Box>
           )}
 
           {/* 판단 버튼 */}
@@ -224,10 +170,10 @@ export default function StepViewer({ steps }: Props) {
               variant="contained"
               color="success"
               startIcon={<CheckCircleIcon />}
-              onClick={handleNormal}
+              onClick={handleDone}
               sx={{ py: 1.5, fontSize: 16 }}
             >
-              {normalLabel}
+              정상 / 조치 완료
             </Button>
             <Button
               fullWidth
@@ -235,9 +181,14 @@ export default function StepViewer({ steps }: Props) {
               variant="contained"
               endIcon={<ArrowForwardIcon />}
               onClick={handleNext}
-              sx={{ py: 1.5, fontSize: 16, bgcolor: "#1e293b", "&:hover": { bgcolor: "#0f172a" } }}
+              sx={{
+                py: 1.5,
+                fontSize: 16,
+                bgcolor: "#1e293b",
+                "&:hover": { bgcolor: "#0f172a" },
+              }}
             >
-              {hasNext ? nextLabel : "조치 완료 / 종료"}
+              추가 정보 필요
             </Button>
           </Stack>
         </Box>

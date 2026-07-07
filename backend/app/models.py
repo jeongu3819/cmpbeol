@@ -52,14 +52,7 @@ class TroubleshootingStep(Base):
         nullable=False,
     )
     step_order = Column(Integer, nullable=False)
-    step_title = Column(String(300), nullable=True)
     description = Column(Text, nullable=True)
-    decision_question = Column(Text, nullable=True)
-    normal_label = Column(String(100), nullable=False, default="정상 / 조치 완료")
-    normal_result_text = Column(Text, nullable=True)
-    next_label = Column(String(100), nullable=False, default="추가 판단 필요")
-    next_step_order = Column(Integer, nullable=True)
-    caution = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
     updated_at = Column(
         TIMESTAMP,

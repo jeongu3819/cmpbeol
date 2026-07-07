@@ -10,14 +10,7 @@ export interface StepImage {
 export interface Step {
   id?: number;
   step_order: number;
-  step_title?: string | null;
   description?: string | null;
-  decision_question?: string | null;
-  normal_label?: string | null;
-  normal_result_text?: string | null;
-  next_label?: string | null;
-  next_step_order?: number | null;
-  caution?: string | null;
   images?: StepImage[];
 }
 
@@ -72,20 +65,10 @@ export interface GuideFilters {
   q?: string;
 }
 
-export const DEFAULT_NORMAL_LABEL = "정상 / 조치 완료";
-export const DEFAULT_NEXT_LABEL = "추가 판단 필요";
-
 export function emptyStep(order: number): Step {
   return {
     step_order: order,
-    step_title: "",
     description: "",
-    decision_question: "",
-    normal_label: DEFAULT_NORMAL_LABEL,
-    normal_result_text: "",
-    next_label: DEFAULT_NEXT_LABEL,
-    next_step_order: null,
-    caution: "",
     images: [],
   };
 }
