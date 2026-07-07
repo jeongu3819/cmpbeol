@@ -8,6 +8,7 @@ import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import StepImagePasteBox from "./StepImagePasteBox";
 import type { StepDraft } from "../../types/guide";
 
@@ -38,12 +39,13 @@ export default function StepEditorCard({
       sx={{
         p: 2,
         borderRadius: 2,
-        // 폭은 이미지 크기에 따라 자연스럽게 커지고, 높이는 내용에 맞춰 확장된다.
-        flex: "0 0 auto",
-        minWidth: 320,
+        // 그리드 셀 안에서만 커지도록: 카드가 화면 밖으로 넘치지 않게 폭을 제한한다.
+        width: "100%",
+        maxWidth: 480,
+        minWidth: 0,
+        boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
-        alignSelf: "flex-start",
       }}
     >
       <Stack
@@ -52,9 +54,16 @@ export default function StepEditorCard({
         alignItems="center"
         sx={{ mb: 1.5 }}
       >
-        <Typography variant="subtitle1" fontWeight={700}>
-          Step {step.step_order}
-        </Typography>
+        <Stack direction="row" spacing={0.75} alignItems="center">
+          <Typography variant="subtitle1" fontWeight={700}>
+            Step {step.step_order}
+          </Typography>
+          {index < total - 1 && (
+            <Tooltip title="다음 Step으로 이어집니다">
+              <ArrowForwardIcon sx={{ fontSize: 18, color: "text.disabled" }} />
+            </Tooltip>
+          )}
+        </Stack>
         <Stack direction="row" spacing={0.25}>
           <Tooltip title="왼쪽으로">
             <span>

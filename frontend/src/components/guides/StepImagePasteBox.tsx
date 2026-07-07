@@ -9,7 +9,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const MIN_WIDTH = 180;
-const MAX_WIDTH = 900;
 const DEFAULT_WIDTH = 320;
 
 interface Props {
@@ -36,6 +35,7 @@ export default function StepImagePasteBox({
   onResize,
 }: Props) {
   const ratioRef = useRef<number>(16 / 9); // naturalWidth / naturalHeight
+  const rootRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
 
@@ -82,10 +82,12 @@ export default function StepImagePasteBox({
     const startX = event.clientX;
     const startWidth = width;
     const ratio = ratioRef.current || 16 / 9;
+    // 카드 내부 너비를 넘어서 이미지를 키우지 않는다. (사이트가 밀리지 않도록)
+    const maxWidth = Math.max(MIN_WIDTH, rootRef.current?.clientWidth ?? startWidth);
 
     const onMove = (e: MouseEvent) => {
       const next = Math.min(
-        MAX_WIDTH,
+        maxWidth,
         Math.max(MIN_WIDTH, Math.round(startWidth + (e.clientX - startX)))
       );
       onResize(next, Math.round(next / ratio));
@@ -99,10 +101,10 @@ export default function StepImagePasteBox({
   };
 
   return (
-    <Box>
+    <Box ref={rootRef}>
       {previewUrl ? (
-        // 이미지가 있으면 placeholder 박스를 없애고, 실제 이미지 크기에 맞춰 표시한다.
-        <Box sx={{ position: "relative", width, maxWidth: "none" }}>
+        // 이미지가 있으면 placeholder 박스를 없애고, 카드 폭 안에서 표시 크기를 조절한다.
+        <Box sx={{ position: "relative", width, maxWidth: "100%" }}>
           <Box
             component="img"
             src={previewUrl}
@@ -118,7 +120,7 @@ export default function StepImagePasteBox({
               display: "block",
               width,
               height: "auto",
-              maxWidth: "none",
+              maxWidth: "100%",
               borderRadius: 1,
               userSelect: "none",
             }}
