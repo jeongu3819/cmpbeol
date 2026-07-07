@@ -1,8 +1,9 @@
+import json
 import os
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
@@ -54,6 +55,103 @@ def _load_guide(db: Session, guide_id: int) -> models.TroubleshootingGuide:
     if not guide:
         raise HTTPException(status_code=404, detail="가이드를 찾을 수 없습니다.")
     return guide
+
+
+# ---------------------------------------------------------------------------
+# Multipart(with-steps) helpers: 가이드 + Step + 이미지를 한 번에 저장
+# ---------------------------------------------------------------------------
+def _save_upload_bytes(content: bytes, original_filename: Optional[str]) -> str:
+    """이미지 바이트를 troubleshooting 업로드 폴더에 저장하고 URL 을 반환한다."""
+    ext = os.path.splitext(original_filename or "")[1].lower()
+    if ext not in ALLOWED_IMAGE_EXT:
+        ext = ".png"
+    os.makedirs(settings.upload_troubleshooting_dir, exist_ok=True)
+    stored_name = f"{uuid.uuid4().hex}{ext}"
+    dest = os.path.join(settings.upload_troubleshooting_dir, stored_name)
+    with open(dest, "wb") as f:
+        f.write(content)
+    return f"/uploads/troubleshooting/{stored_name}"
+
+
+def _delete_image_file(image: models.TroubleshootingStepImage) -> None:
+    """uploads 하위에 저장된 물리 이미지 파일을 삭제한다."""
+    url = image.image_url or ""
+    for prefix, directory in (
+        ("/uploads/troubleshooting/", settings.upload_troubleshooting_dir),
+        ("/uploads/steps/", settings.upload_steps_dir),
+    ):
+        if url.startswith(prefix):
+            path = os.path.join(directory, url.rsplit("/", 1)[-1])
+            if os.path.isfile(path):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+            return
+
+
+def _apply_step_image(
+    step: models.TroubleshootingStep,
+    image_spec: dict,
+    contents: list[bytes],
+    filenames: list[Optional[str]],
+) -> None:
+    """Step 하나의 이미지 상태를 spec 에 맞춰 동기화한다.
+
+    image_spec.mode:
+      - "existing": 기존 이미지 유지 (display 크기만 갱신 가능)
+      - "new":      새 파일 업로드로 교체
+      - "none":     이미지 없음 (기존 이미지 제거)
+    """
+    mode = image_spec.get("mode", "none")
+    disp_w = image_spec.get("display_width")
+    disp_h = image_spec.get("display_height")
+
+    if mode == "existing":
+        keep_id = image_spec.get("existing_image_id")
+        for image in list(step.images):
+            if image.id == keep_id:
+                image.display_width = disp_w
+                image.display_height = disp_h
+            else:
+                _delete_image_file(image)
+                step.images.remove(image)
+        return
+
+    # new / none: 기존 이미지는 모두 제거
+    for image in list(step.images):
+        _delete_image_file(image)
+        step.images.remove(image)
+
+    if mode == "new":
+        fi = image_spec.get("file_index")
+        if fi is not None and 0 <= fi < len(contents):
+            url = _save_upload_bytes(contents[fi], filenames[fi])
+            step.images.append(
+                models.TroubleshootingStepImage(
+                    image_url=url,
+                    original_filename=filenames[fi],
+                    display_width=disp_w,
+                    display_height=disp_h,
+                    sort_order=1,
+                )
+            )
+
+
+async def _read_uploads(images: list[UploadFile]) -> tuple[list[bytes], list[Optional[str]]]:
+    contents: list[bytes] = []
+    filenames: list[Optional[str]] = []
+    for f in images:
+        contents.append(await f.read())
+        filenames.append(f.filename)
+    return contents, filenames
+
+
+def _parse_json_field(raw: str, field: str):
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=f"{field} 이(가) 올바른 JSON 이 아닙니다.") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +256,108 @@ def update_guide(guide_id: int, payload: schemas.GuideUpdate, db: Session = Depe
 
     if payload.steps is not None:
         _sync_steps(guide, payload.steps)
+
+    db.commit()
+    return _load_guide(db, guide_id)
+
+
+# ---------------------------------------------------------------------------
+# Guides + Steps + Images (multipart, 한 번에 저장)
+# ---------------------------------------------------------------------------
+@router.post("/guides/with-steps", response_model=schemas.GuideOut, status_code=201)
+async def create_guide_with_steps(
+    guide_data: str = Form(...),
+    steps_data: str = Form("[]"),
+    images: list[UploadFile] = File(default=[]),
+    db: Session = Depends(get_db),
+):
+    guide_dict = _parse_json_field(guide_data, "guide_data")
+    guide_payload = schemas.GuideBase(**guide_dict)
+    steps = _parse_json_field(steps_data, "steps_data")
+    contents, filenames = await _read_uploads(images)
+
+    exists = (
+        db.query(models.TroubleshootingGuide)
+        .filter(models.TroubleshootingGuide.guide_type == guide_payload.guide_type)
+        .filter(models.TroubleshootingGuide.equipment_model == guide_payload.equipment_model)
+        .filter(models.TroubleshootingGuide.code == guide_payload.code)
+        .first()
+    )
+    if exists:
+        raise HTTPException(
+            status_code=409,
+            detail=f"이미 존재하는 조합입니다: {guide_payload.guide_type} / {guide_payload.equipment_model} / {guide_payload.code}",
+        )
+
+    guide = models.TroubleshootingGuide(**guide_payload.model_dump())
+    db.add(guide)
+    db.flush()
+
+    for idx, s in enumerate(steps):
+        step = models.TroubleshootingStep(
+            guide_id=guide.id,
+            step_order=s.get("step_order", idx + 1),
+            description=s.get("description"),
+        )
+        db.add(step)
+        db.flush()
+        _apply_step_image(step, s.get("image") or {}, contents, filenames)
+
+    db.commit()
+    return _load_guide(db, guide.id)
+
+
+@router.put("/guides/{guide_id}/with-steps", response_model=schemas.GuideOut)
+async def update_guide_with_steps(
+    guide_id: int,
+    guide_data: str = Form(...),
+    steps_data: str = Form("[]"),
+    images: list[UploadFile] = File(default=[]),
+    db: Session = Depends(get_db),
+):
+    guide = _load_guide(db, guide_id)
+    guide_dict = _parse_json_field(guide_data, "guide_data")
+    steps = _parse_json_field(steps_data, "steps_data")
+    contents, filenames = await _read_uploads(images)
+
+    updatable = {
+        "guide_type",
+        "equipment_model",
+        "process_area",
+        "code",
+        "title",
+        "summary",
+        "is_active",
+    }
+    for key, value in guide_dict.items():
+        if key in updatable:
+            setattr(guide, key, value)
+
+    existing_steps = {s.id: s for s in guide.steps}
+    keep_ids: set[int] = set()
+
+    for idx, s in enumerate(steps):
+        sid = s.get("id")
+        if sid and sid in existing_steps:
+            step = existing_steps[sid]
+            step.step_order = s.get("step_order", idx + 1)
+            step.description = s.get("description")
+            keep_ids.add(sid)
+        else:
+            step = models.TroubleshootingStep(
+                guide_id=guide.id,
+                step_order=s.get("step_order", idx + 1),
+                description=s.get("description"),
+            )
+            db.add(step)
+            db.flush()
+        _apply_step_image(step, s.get("image") or {}, contents, filenames)
+
+    for sid, step in existing_steps.items():
+        if sid not in keep_ids:
+            for image in step.images:
+                _delete_image_file(image)
+            guide.steps.remove(step)
 
     db.commit()
     return _load_guide(db, guide_id)

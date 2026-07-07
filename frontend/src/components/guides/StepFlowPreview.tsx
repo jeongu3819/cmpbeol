@@ -21,9 +21,10 @@ export default function StepFlowPreview({
       sx={{
         display: "flex",
         alignItems: "center",
-        flexWrap: "wrap",
+        flexWrap: "nowrap",
         gap: 1,
         py: 1,
+        overflowX: "auto",
       }}
     >
       {steps.map((step, idx) => {

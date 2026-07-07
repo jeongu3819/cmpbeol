@@ -117,7 +117,7 @@ export default function StepViewer({ steps }: Props) {
         <Divider />
 
         <Box sx={{ p: 3 }}>
-          {/* 이미지 영역 */}
+          {/* 이미지 영역 (저장된 표시 크기 유지) */}
           <Box sx={{ mb: 2 }}>
             {image ? (
               <Box
@@ -126,8 +126,9 @@ export default function StepViewer({ steps }: Props) {
                 alt={image.original_filename ?? "step"}
                 sx={{
                   display: "block",
-                  width: "100%",
-                  maxHeight: 400,
+                  width: image.display_width ? image.display_width : "100%",
+                  maxWidth: "100%",
+                  height: "auto",
                   objectFit: "contain",
                   borderRadius: 2,
                   border: "1px solid",

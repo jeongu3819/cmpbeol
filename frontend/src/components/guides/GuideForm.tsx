@@ -8,7 +8,8 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import StepBuilder from "./StepBuilder";
 import GuideTypeBadge from "./GuideTypeBadge";
-import type { Guide, GuideInput, Step } from "../../types/guide";
+import { guideToStepDrafts } from "../../api/guideApi";
+import type { Guide, GuideMeta, StepDraft } from "../../types/guide";
 import type { GuideType } from "../../types/common";
 import { guideTypeLabels } from "../../types/common";
 
@@ -17,11 +18,11 @@ interface Props {
   guideType?: GuideType;
   initial?: Partial<Guide>;
   submitting?: boolean;
-  onSubmit: (payload: GuideInput) => void;
+  onSubmit: (meta: GuideMeta, steps: StepDraft[]) => void;
   onCancel: () => void;
 }
 
-function toInput(guideType: GuideType, initial?: Partial<Guide>): GuideInput {
+function toMeta(guideType: GuideType, initial?: Partial<Guide>): GuideMeta {
   return {
     guide_type: initial?.guide_type ?? guideType,
     equipment_model: initial?.equipment_model ?? "",
@@ -30,7 +31,6 @@ function toInput(guideType: GuideType, initial?: Partial<Guide>): GuideInput {
     title: initial?.title ?? "",
     summary: initial?.summary ?? "",
     is_active: initial?.is_active ?? true,
-    steps: initial?.steps ?? [],
   };
 }
 
@@ -41,28 +41,29 @@ export default function GuideForm({
   onSubmit,
   onCancel,
 }: Props) {
-  const [form, setForm] = useState<GuideInput>(toInput(guideType, initial));
+  const [form, setForm] = useState<GuideMeta>(toMeta(guideType, initial));
+  const [steps, setSteps] = useState<StepDraft[]>(() =>
+    guideToStepDrafts(initial)
+  );
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   const labels = guideTypeLabels(form.guide_type);
 
   const set =
-    (key: keyof GuideInput) =>
+    (key: keyof GuideMeta) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const setSteps = (steps: Step[]) => setForm((f) => ({ ...f, steps }));
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const required: (keyof GuideInput)[] = ["equipment_model", "code", "title"];
+    const required: (keyof GuideMeta)[] = ["equipment_model", "code", "title"];
     const nextErrors: Record<string, boolean> = {};
     required.forEach((k) => {
       if (!String(form[k] ?? "").trim()) nextErrors[k] = true;
     });
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
-    onSubmit(form);
+    onSubmit(form, steps);
   };
 
   return (
@@ -136,7 +137,7 @@ export default function GuideForm({
       </Paper>
 
       <Paper variant="outlined" sx={{ p: 3, mb: 2 }}>
-        <StepBuilder steps={form.steps} onChange={setSteps} />
+        <StepBuilder steps={steps} onChange={setSteps} />
       </Paper>
 
       <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>

@@ -30,6 +30,7 @@ app.add_middleware(
 
 # 업로드 이미지 정적 서빙
 os.makedirs(settings.upload_steps_dir, exist_ok=True)
+os.makedirs(settings.upload_troubleshooting_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.upload_root), name="uploads")
 
 app.include_router(guides.router)

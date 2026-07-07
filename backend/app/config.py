@@ -38,6 +38,10 @@ class Settings(BaseSettings):
         return os.path.join(self.upload_root, "steps")
 
     @property
+    def upload_troubleshooting_dir(self) -> str:
+        return os.path.join(self.upload_root, "troubleshooting")
+
+    @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 

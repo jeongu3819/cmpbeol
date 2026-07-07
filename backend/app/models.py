@@ -80,6 +80,8 @@ class TroubleshootingStepImage(Base):
     )
     image_url = Column(String(500), nullable=False)
     original_filename = Column(String(255), nullable=True)
+    display_width = Column(Integer, nullable=True)
+    display_height = Column(Integer, nullable=True)
     sort_order = Column(Integer, nullable=False, default=1)
     created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
 

@@ -5,11 +5,15 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { createGuide, fetchGuide, updateGuide } from "../api/guideApi";
+import {
+  createGuideWithSteps,
+  fetchGuide,
+  updateGuideWithSteps,
+} from "../api/guideApi";
 import { extractErrorMessage } from "../api/client";
 import GuideForm from "../components/guides/GuideForm";
 import LoadingState from "../components/common/LoadingState";
-import type { GuideInput } from "../types/guide";
+import type { GuideMeta, StepDraft } from "../types/guide";
 import type { GuideType } from "../types/common";
 import { guideTypeLabels } from "../types/common";
 
@@ -30,8 +34,10 @@ export default function GuideFormPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: (payload: GuideInput) =>
-      isEdit ? updateGuide(guideId, payload) : createGuide(payload),
+    mutationFn: ({ meta, steps }: { meta: GuideMeta; steps: StepDraft[] }) =>
+      isEdit
+        ? updateGuideWithSteps(guideId, meta, steps)
+        : createGuideWithSteps(meta, steps),
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ["guides"] });
       queryClient.invalidateQueries({ queryKey: ["guide", saved.id] });
@@ -59,8 +65,8 @@ export default function GuideFormPage() {
         {isEdit ? labels.editPageTitle : labels.newPageTitle}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        이미지와 설명을 Step 순서대로 추가해 주세요. 조회 화면에서는 정상 여부에
-        따라 다음 Step으로 이동합니다.
+        Step 카드에 캡처 이미지를 Ctrl+V로 붙여넣고 설명을 입력하세요. 이미지 크기는
+        우하단 핸들로 조절할 수 있으며, 저장 시 한 번에 업로드됩니다.
       </Typography>
 
       {mutation.isError && (
@@ -74,7 +80,7 @@ export default function GuideFormPage() {
         guideType={effectiveType}
         initial={data}
         submitting={mutation.isPending}
-        onSubmit={(payload) => mutation.mutate(payload)}
+        onSubmit={(meta, steps) => mutation.mutate({ meta, steps })}
         onCancel={() => navigate(-1)}
       />
     </Box>

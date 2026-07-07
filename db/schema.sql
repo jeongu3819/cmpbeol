@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS troubleshooting_step_images (
   step_id           INT NOT NULL,
   image_url         VARCHAR(500) NOT NULL,
   original_filename VARCHAR(255) NULL,
+  display_width     INT NULL,
+  display_height    INT NULL,
   sort_order        INT NOT NULL DEFAULT 1,
   created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_image_step (step_id),

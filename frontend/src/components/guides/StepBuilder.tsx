@@ -3,30 +3,30 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import AddIcon from "@mui/icons-material/Add";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import StepEditorCard from "./StepEditorCard";
 import EmptyState from "../common/EmptyState";
-import { emptyStep } from "../../types/guide";
-import type { Step } from "../../types/guide";
+import { emptyStepDraft, newClientId } from "../../types/guide";
+import type { StepDraft } from "../../types/guide";
 
 interface Props {
-  steps: Step[];
-  onChange: (steps: Step[]) => void;
+  steps: StepDraft[];
+  onChange: (steps: StepDraft[]) => void;
 }
 
 /** 배열 위치(1-based) 기준으로 step_order 를 재부여한다. */
-function renumber(steps: Step[]): Step[] {
+function renumber(steps: StepDraft[]): StepDraft[] {
   return steps.map((s, i) => ({ ...s, step_order: i + 1 }));
 }
 
 export default function StepBuilder({ steps, onChange }: Props) {
-  const update = (next: Step[]) => onChange(renumber(next));
+  const update = (next: StepDraft[]) => onChange(renumber(next));
 
   const addStep = () => {
-    update([...steps, emptyStep(steps.length + 1)]);
+    update([...steps, emptyStepDraft(steps.length + 1)]);
   };
 
-  const patchStep = (index: number, patch: Partial<Step>) => {
+  const patchStep = (index: number, patch: Partial<StepDraft>) => {
     onChange(steps.map((s, i) => (i === index ? { ...s, ...patch } : s)));
   };
 
@@ -36,7 +36,13 @@ export default function StepBuilder({ steps, onChange }: Props) {
 
   const duplicateStep = (index: number) => {
     const src = steps[index];
-    const copy: Step = { ...src, id: undefined, images: [] };
+    // 이미지 파일/미리보기는 그대로 복제하되, 서버 식별자는 새 카드로 취급한다.
+    const copy: StepDraft = {
+      ...src,
+      clientId: newClientId(),
+      id: undefined,
+      existingImageId: undefined,
+    };
     const next = [...steps];
     next.splice(index + 1, 0, copy);
     update(next);
@@ -61,19 +67,31 @@ export default function StepBuilder({ steps, onChange }: Props) {
         <Typography variant="subtitle1" fontWeight={700}>
           조치 Step
         </Typography>
-        <Button size="small" startIcon={<AddIcon />} onClick={addStep}>
+        <Button size="small" variant="outlined" startIcon={<AddIcon />} onClick={addStep}>
           Step 추가
         </Button>
       </Stack>
 
       {steps.length === 0 ? (
         <Box sx={{ border: "1px dashed", borderColor: "divider", borderRadius: 2 }}>
-          <EmptyState message="아직 Step이 없습니다. 'Step 추가'로 이미지와 설명을 순서대로 쌓아보세요." />
+          <EmptyState message="아직 Step이 없습니다. 'Step 추가'로 이미지와 설명을 순서대로 배치해 보세요." />
         </Box>
       ) : (
-        <Stack spacing={0}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "stretch",
+            gap: 2,
+            overflowX: "auto",
+            pb: 1.5,
+          }}
+        >
           {steps.map((step, index) => (
-            <Box key={step.id ?? `new-${index}`}>
+            <Box
+              key={step.clientId}
+              sx={{ display: "flex", alignItems: "stretch", gap: 2 }}
+            >
               <StepEditorCard
                 step={step}
                 index={index}
@@ -81,29 +99,29 @@ export default function StepBuilder({ steps, onChange }: Props) {
                 onChange={(patch) => patchStep(index, patch)}
                 onDelete={() => deleteStep(index)}
                 onDuplicate={() => duplicateStep(index)}
-                onMoveUp={() => move(index, -1)}
-                onMoveDown={() => move(index, 1)}
+                onMoveLeft={() => move(index, -1)}
+                onMoveRight={() => move(index, 1)}
               />
               {index < steps.length - 1 && (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
-                  <ArrowDownwardIcon sx={{ color: "text.disabled" }} />
+                <Box sx={{ display: "flex", alignItems: "center", flex: "0 0 auto" }}>
+                  <KeyboardArrowRightIcon sx={{ color: "text.disabled", fontSize: 32 }} />
                 </Box>
               )}
             </Box>
           ))}
-        </Stack>
-      )}
 
-      {steps.length > 0 && (
-        <Button
-          sx={{ mt: 2 }}
-          size="small"
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={addStep}
-        >
-          Step 추가
-        </Button>
+          {/* 오른쪽 끝 Step 추가 */}
+          <Box sx={{ display: "flex", alignItems: "center", flex: "0 0 auto" }}>
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={addStep}
+              sx={{ height: 80, whiteSpace: "nowrap" }}
+            >
+              Step 추가
+            </Button>
+          </Box>
+        </Box>
       )}
     </Box>
   );

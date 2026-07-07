@@ -4,22 +4,22 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Stack from "@mui/material/Stack";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
-import StepImageUploader from "./StepImageUploader";
-import type { Step, StepImage } from "../../types/guide";
+import StepImagePasteBox from "./StepImagePasteBox";
+import type { StepDraft } from "../../types/guide";
 
 interface Props {
-  step: Step;
+  step: StepDraft;
   index: number;
   total: number;
-  onChange: (patch: Partial<Step>) => void;
+  onChange: (patch: Partial<StepDraft>) => void;
   onDelete: () => void;
   onDuplicate: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  onMoveLeft: () => void;
+  onMoveRight: () => void;
 }
 
 export default function StepEditorCard({
@@ -29,11 +29,22 @@ export default function StepEditorCard({
   onChange,
   onDelete,
   onDuplicate,
-  onMoveUp,
-  onMoveDown,
+  onMoveLeft,
+  onMoveRight,
 }: Props) {
   return (
-    <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        flex: "0 0 380px",
+        minWidth: 360,
+        maxWidth: 420,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Stack
         direction="row"
         justifyContent="space-between"
@@ -43,22 +54,22 @@ export default function StepEditorCard({
         <Typography variant="subtitle1" fontWeight={700}>
           Step {step.step_order}
         </Typography>
-        <Stack direction="row" spacing={0.5}>
-          <Tooltip title="위로">
+        <Stack direction="row" spacing={0.25}>
+          <Tooltip title="왼쪽으로">
             <span>
-              <IconButton size="small" onClick={onMoveUp} disabled={index === 0}>
-                <ArrowUpwardIcon fontSize="small" />
+              <IconButton size="small" onClick={onMoveLeft} disabled={index === 0}>
+                <KeyboardArrowLeftIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="아래로">
+          <Tooltip title="오른쪽으로">
             <span>
               <IconButton
                 size="small"
-                onClick={onMoveDown}
+                onClick={onMoveRight}
                 disabled={index === total - 1}
               >
-                <ArrowDownwardIcon fontSize="small" />
+                <KeyboardArrowRightIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>
@@ -75,16 +86,35 @@ export default function StepEditorCard({
         </Stack>
       </Stack>
 
-      <StepImageUploader
-        stepId={step.id}
-        images={step.images ?? []}
-        onChange={(images: StepImage[]) => onChange({ images })}
+      <StepImagePasteBox
+        stepOrder={step.step_order}
+        previewUrl={step.imagePreviewUrl}
+        displayWidth={step.imageDisplayWidth}
+        onImageChange={(file, previewUrl) =>
+          onChange({
+            imageFile: file,
+            imagePreviewUrl: previewUrl,
+            existingImageId: undefined,
+          })
+        }
+        onImageRemove={() =>
+          onChange({
+            imageFile: undefined,
+            imagePreviewUrl: undefined,
+            existingImageId: undefined,
+            imageDisplayWidth: undefined,
+            imageDisplayHeight: undefined,
+          })
+        }
+        onResize={(w, h) =>
+          onChange({ imageDisplayWidth: w, imageDisplayHeight: h })
+        }
       />
 
       <TextField
         fullWidth
         multiline
-        minRows={2}
+        minRows={3}
         sx={{ mt: 2 }}
         placeholder="이 단계에서 확인해야 할 내용을 입력하세요."
         value={step.description ?? ""}

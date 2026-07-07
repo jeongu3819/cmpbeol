@@ -15,6 +15,8 @@ class StepImageOut(BaseModel):
     id: int
     image_url: str
     original_filename: Optional[str] = None
+    display_width: Optional[int] = None
+    display_height: Optional[int] = None
     sort_order: int = 1
 
 
